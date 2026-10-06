@@ -1,27 +1,48 @@
 /// <reference types="vitest/config" />
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 
 // GitHub Pages project sites live under /<repo>/. The deploy workflow sets
 // BASE_PATH from the repository name; locally we default to the same value.
 const base = process.env.BASE_PATH ?? '/salary-tracker/';
 
+/** Content hash of everything in public/ (icons, splash screens, manifest). */
+function publicHash(): string {
+  const hash = createHash('sha1');
+  const walk = (dir: string) => {
+    for (const name of readdirSync(dir).sort()) {
+      const p = join(dir, name);
+      if (statSync(p).isDirectory()) walk(p);
+      else hash.update(name).update(readFileSync(p));
+    }
+  };
+  walk(new URL('./public', import.meta.url).pathname);
+  return hash.digest('hex').slice(0, 8);
+}
+
 /**
  * Production-only helpers for GitHub Pages:
  * - 404.html is a copy of index.html, so deep links / refreshes boot the SPA.
  * - sw.js is generated with the hashed asset list for offline precaching.
+ * - icon / manifest / splash links get ?v=<hash of public/> so phones never reuse a stale icon.
  */
 function pagesAndServiceWorker(): Plugin {
+  const assetsVersion = publicHash();
   return {
     name: 'pages-and-sw',
     apply: 'build',
     enforce: 'post',
+    transformIndexHtml(html) {
+      return html.replace(/(href="[^"?]*(?:\/icons\/|\/splash\/|favicon\.(?:ico|svg)|manifest\.webmanifest)[^"?]*)"/g, `$1?v=${assetsVersion}"`);
+    },
     generateBundle(_options, bundle) {
       const files = Object.keys(bundle).filter((f) => !f.endsWith('.map') && f !== 'index.html');
       const precache = ['./', ...files, 'manifest.webmanifest', 'favicon.svg', 'favicon.ico', 'icons/favicon-32.png', 'icons/icon-192.png', 'icons/apple-touch-icon.png'];
-      const version = createHash('sha1').update(files.sort().join('|')).digest('hex').slice(0, 10);
+      // Changes whenever code OR any icon/splash/manifest changes, so the SW (and its cache) refreshes.
+      const version = createHash('sha1').update(files.sort().join('|')).update(assetsVersion).digest('hex').slice(0, 10);
       const template = readFileSync(new URL('./sw/sw.template.js', import.meta.url), 'utf8');
       this.emitFile({
         type: 'asset',

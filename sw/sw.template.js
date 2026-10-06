@@ -41,18 +41,35 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Hashed assets: cache first.
+  // Hashed build assets never change under the same URL: cache first.
+  if (url.pathname.includes('/assets/')) {
+    event.respondWith(
+      caches.match(request).then(
+        (cached) =>
+          cached ||
+          fetch(request).then((res) => {
+            if (res.ok) {
+              const copy = res.clone();
+              caches.open(CACHE).then((cache) => cache.put(request, copy));
+            }
+            return res;
+          }),
+      ),
+    );
+    return;
+  }
+
+  // Icons, manifest, splash screens: always ask the network first so a redesigned icon
+  // is what iOS/Android get on "Add to Home Screen"; the cache is only an offline fallback.
   event.respondWith(
-    caches.match(request).then(
-      (cached) =>
-        cached ||
-        fetch(request).then((res) => {
-          if (res.ok) {
-            const copy = res.clone();
-            caches.open(CACHE).then((cache) => cache.put(request, copy));
-          }
-          return res;
-        }),
-    ),
+    fetch(request)
+      .then((res) => {
+        if (res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE).then((cache) => cache.put(request, copy));
+        }
+        return res;
+      })
+      .catch(() => caches.match(request, { ignoreSearch: true })),
   );
 });
