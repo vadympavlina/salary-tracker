@@ -11,7 +11,7 @@ const pub = (p) => new URL(`../public/${p}`, import.meta.url).pathname;
 mkdirSync(pub('icons'), { recursive: true });
 
 // Vector favicon for modern browsers + Safari pinned tab (monochrome).
-writeFileSync(pub('favicon.svg'), faviconIcon({ weight: 1.3, detail: true }) + '\n');
+writeFileSync(pub('favicon.svg'), faviconIcon({ small: false }) + '\n');
 writeFileSync(pub('icons/safari-pinned-tab.svg'), pinnedTabIcon() + '\n');
 
 const tmp = join(tmpdir(), `salary-icons-${process.pid}`);
@@ -19,22 +19,22 @@ mkdirSync(tmp, { recursive: true });
 
 // [file, size, svg, transparent background?]
 const png = [
-  // Browser tab: the coin alone, strokes thickened per size.
-  ['icons/favicon-16.png', 16, faviconIcon({ weight: 1.9 }), true],
-  ['icons/favicon-32.png', 32, faviconIcon({ weight: 1.6 }), true],
+  // Browser tab: simplified wallet that stays legible at 16–32px.
+  ['icons/favicon-16.png', 16, faviconIcon(), true],
+  ['icons/favicon-32.png', 32, faviconIcon(), true],
   ['icons/icon-192.png', 192, appIcon(), true],
   ['icons/icon-512.png', 512, appIcon(), true],
   // iOS adds its own rounded mask and shows transparency as black — full bleed.
   ['icons/apple-touch-icon.png', 180, appIcon({ radius: 0 }), false],
   // Android adaptive icons: coin inside the 80% safe-zone circle, full bleed.
-  ['icons/icon-maskable-192.png', 192, appIcon({ radius: 0, scale: 0.84 }), false],
-  ['icons/icon-maskable-512.png', 512, appIcon({ radius: 0, scale: 0.84 }), false],
+  ['icons/icon-maskable-192.png', 192, appIcon({ radius: 0, scale: 0.8 }), false],
+  ['icons/icon-maskable-512.png', 512, appIcon({ radius: 0, scale: 0.8 }), false],
   // Windows start-menu tile.
   ['icons/mstile-150.png', 150, appIcon({ radius: 0, scale: 0.9 }), false],
   // Sources for favicon.ico
-  [join(tmp, 'ico-16.png'), 16, faviconIcon({ weight: 1.9 }), true],
-  [join(tmp, 'ico-32.png'), 32, faviconIcon({ weight: 1.6 }), true],
-  [join(tmp, 'ico-48.png'), 48, faviconIcon({ weight: 1.35, detail: true }), true],
+  [join(tmp, 'ico-16.png'), 16, faviconIcon(), true],
+  [join(tmp, 'ico-32.png'), 32, faviconIcon(), true],
+  [join(tmp, 'ico-48.png'), 48, faviconIcon({ small: false }), true],
 ];
 
 const executablePath = process.env.CHROMIUM_PATH ?? '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
