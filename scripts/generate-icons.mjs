@@ -22,14 +22,14 @@ const png = [
   // Browser tab: simplified wallet that stays legible at 16–32px.
   ['icons/favicon-16.png', 16, faviconIcon(), true],
   ['icons/favicon-32.png', 32, faviconIcon(), true],
-  ['icons/icon-192.png', 192, appIcon(), true],
-  ['icons/icon-512.png', 512, appIcon(), true],
+  ['icons/app-192.png', 192, appIcon(), true],
+  ['icons/app-512.png', 512, appIcon(), true],
   // iOS adds its own rounded mask and shows transparency as black — full bleed.
   // New file name on purpose: iOS remembers failed icon URLs, a fresh one is always fetched.
   ['icons/home-icon-180.png', 180, appIcon({ radius: 0 }), false],
   // Android adaptive icons: coin inside the 80% safe-zone circle, full bleed.
-  ['icons/icon-maskable-192.png', 192, appIcon({ radius: 0, scale: 0.8 }), false],
-  ['icons/icon-maskable-512.png', 512, appIcon({ radius: 0, scale: 0.8 }), false],
+  ['icons/app-maskable-192.png', 192, appIcon({ radius: 0, scale: 0.8 }), false],
+  ['icons/app-maskable-512.png', 512, appIcon({ radius: 0, scale: 0.8 }), false],
   // Windows start-menu tile.
   ['icons/mstile-150.png', 150, appIcon({ radius: 0, scale: 0.9 }), false],
   // Sources for favicon.ico
