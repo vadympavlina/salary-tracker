@@ -32,7 +32,7 @@ Base path береться з назви репозиторію (`BASE_PATH`). D
 
 ## Іконки
 
-Усі іконки генеруються з одного джерела `icons-src/icon.mjs`: `npm run icons` → `favicon.ico` (16/32/48), `favicon.svg`, PNG 16/32, apple-touch-icon 180, PWA 192/512 + maskable, плитка Windows, Safari pinned tab.
+Усі іконки генеруються з одного джерела `icons-src/icon.mjs`: `npm run icons` → `favicon.ico` (16/32/48), `favicon.svg`, PNG 16/32, apple-touch-icon 180/167/152/120, PWA 192/512 + maskable, плитка Windows, Safari pinned tab і 18 заставок запуску iOS (`public/splash/`, посилання в `index.html` оновлюються автоматично).
 
 ## Логіка розрахунку
 
