@@ -1,0 +1,38 @@
+import { expect, type Locator, type Page } from '@playwright/test';
+
+const NB = ' ';
+/** "28 450" → "28 450 ₴" with the app's non-breaking spaces. */
+export const uah = (s: string) => s.replace(/ /g, NB) + NB + '₴';
+export const nb = (s: string) => s.replace(/ /g, NB);
+
+export const field = (page: Page, label: string) => page.getByLabel(label, { exact: true });
+
+/** Fails on uncaught errors and console errors for the whole test. */
+export function trackErrors(page: Page) {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => {
+    if (m.type() === 'error') errors.push(m.text());
+  });
+  return () => expect(errors, 'browser errors').toEqual([]);
+}
+
+/** The element is inside the viewport and is what a tap at its center would hit (not hidden under a bar). */
+export async function expectTappable(locator: Locator) {
+  await expect(locator).toBeVisible();
+  const hit = await locator.evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    const x = r.left + r.width / 2;
+    const y = r.top + r.height / 2;
+    if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) return 'outside viewport';
+    const top = document.elementFromPoint(x, y);
+    return top && (el === top || el.contains(top)) ? 'ok' : `covered by ${top?.className || top?.tagName}`;
+  });
+  expect(hit).toBe('ok');
+}
+
+/** Ends running number animations so screenshots/asserts see final values. */
+export async function settle(page: Page) {
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(450);
+}

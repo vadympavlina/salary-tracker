@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { readFileSync } from 'node:fs';
@@ -42,6 +43,9 @@ export default defineConfig({
   plugins: [react(), pagesAndServiceWorker()],
   define: {
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version ?? '1.0.0'),
+  },
+  test: {
+    include: ['src/**/*.test.ts'],
   },
   build: {
     target: 'es2020',

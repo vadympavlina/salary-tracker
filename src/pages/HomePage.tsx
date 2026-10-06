@@ -1,8 +1,8 @@
 import { CirclePlay, Plus, Settings, UsersRound, Wallet, WalletCards } from 'lucide-react';
 import { useSalary } from '../hooks/useSalaryStore';
 import { calculateSalary, percentChange } from '../services/calculations/salaryCalculator';
-import { shiftPeriod } from '../utils/period';
-import { formatNumber, formatUAH } from '../utils/format';
+import { formatMonthShort, formatPeriod, shiftPeriod } from '../utils/period';
+import { formatCompact, formatNumber, formatUAH } from '../utils/format';
 import { Link } from '../router/router';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Button, IconButton } from '../components/ui/Button';
@@ -12,6 +12,9 @@ import { SalaryCard } from '../components/salary/SalaryCard';
 import { MoneySummary } from '../components/salary/MoneySummary';
 import { StatCard } from '../components/dashboard/StatCard';
 import { HistoryItem } from '../components/history/HistoryItem';
+import { ChartCard } from '../components/analytics/ChartCard';
+import { BarChart } from '../components/analytics/BarChart';
+import { buildMonthlySeries } from '../services/calculations/analytics';
 
 export function HomePage() {
   const { records, profile, findByPeriod } = useSalary();
@@ -77,6 +80,19 @@ export function HomePage() {
               ))}
             </ul>
           </section>
+          {records.length > 1 && (
+            <div className="desktop-only">
+              <ChartCard title="Динаміка доходу" subtitle="Нараховано за останні місяці" action={<Link to="/analytics" className="link">Аналітика</Link>}>
+                <BarChart
+                  data={buildMonthlySeries(records, 6).map((p) => ({ key: p.period, label: formatMonthShort(p.period), title: formatPeriod(p.period), value: p.gross }))}
+                  format={formatUAH}
+                  axisFormat={formatCompact}
+                  ariaLabel="Нараховано по місяцях"
+                  height={150}
+                />
+              </ChartCard>
+            </div>
+          )}
           <Button to="/calculate?new=1" icon={<Plus size={20} strokeWidth={2.4} />} block className="home-cta">
             Новий розрахунок
           </Button>

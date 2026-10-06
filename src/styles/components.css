@@ -43,7 +43,17 @@
 .icon-btn:active { transform: scale(0.92); }
 .icon-btn:hover { background: var(--surface-2); }
 
-.link { color: var(--accent); font-weight: 600; font-size: 14px; }
+.link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin: -12px -8px;
+  padding: 12px 8px;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 14px;
+}
+.notice .link { display: inline-block; min-height: 44px; margin: -12px 0; padding: 12px 4px; line-height: 20px; }
 .link:hover { text-decoration: underline; }
 
 .chip {
@@ -298,6 +308,10 @@
 .segmented__item[aria-checked='true'] { color: var(--text); }
 .segmented__badge { font-size: 11.5px; font-weight: 700; color: var(--text-3); }
 .segmented--sm .segmented__item { min-height: 34px; font-size: 13px; }
+@media (pointer: coarse) {
+  .segmented__item,
+  .segmented--sm .segmented__item { min-height: 44px; }
+}
 
 /* ================= Form fields ================= */
 .calc .group {
@@ -665,4 +679,20 @@ html.modal-open { overflow: hidden; }
 .toast__action {
   min-height: 36px; padding: 0 12px; border: 0; border-radius: 12px;
   background: rgba(255, 255, 255, 0.14); color: #fff; font-weight: 700; font-size: 14px;
+}
+
+/* ================= Small phones (iPhone SE 1st gen, 320–359px) ================= */
+@media (max-width: 359px) {
+  .history-item { gap: 10px; padding-left: 12px; }
+  .history-item__icon { display: none; }
+  .list-card { --inset: 12px; }
+  .money__cell dt { font-size: 10px; letter-spacing: 0.02em; }
+  .money__cell + .money__cell { padding-left: 8px; }
+  .stat { padding: 12px; }
+  .stat__value { font-size: 18px; }
+  .field__icon { display: none; }
+  .stepper { gap: 4px; }
+  .stepper__btn { width: 44px; height: 44px; }
+  .action-bar--calc .btn { min-width: 0; padding: 0 16px; }
+  .segmented__badge { display: none; }
 }

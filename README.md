@@ -9,13 +9,24 @@ npm install
 npm run dev        # http://localhost:5173/salary-tracker/
 npm test           # unit-тести розрахунків і сховища
 npm run build      # production-збірка в dist/
-npx vite preview --port 4173 &  npm run e2e   # повний сценарій у Chromium
+npm run test:e2e   # e2e + responsive на 11+ пристроях (потрібна збірка)
 ```
 
-## Деплой на GitHub Pages
+Локально без завантаження браузерів Playwright: `CHROMIUM_PATH=/шлях/до/chrome npm run test:e2e`. WebKit (Safari) запускається в CI або з `PW_WEBKIT=1`.
+
+## Тести на пристроях
+
+`playwright.config.ts` містить матрицю: iPhone SE 1-го покоління (320), SE (375), Android 360, iPhone 15, Pixel 7, Pro Max, телефон у ландшафті, iPad Mini, iPad у ландшафті, ноутбук 1280, монітор 1920; у CI ще Safari на iPhone 15 / SE / iPad / Mac.
+
+- `tests/e2e/flow.spec.ts` — повний сценарій: створення → розрахунок → збереження → історія → редагування → видалення/undo → аналітика → налаштування → експорт → імпорт.
+- `tests/e2e/responsive.spec.ts` — на кожній сторінці: немає горизонтального скролу, правильна навігація (tab bar / бокова панель у ландшафті / sidebar), зони дотику ≥ 44px, немає обрізаного тексту, головні кнопки не перекриті панелями, діалоги влазять в екран, клавіатурна навігація. Скриншот кожної сторінки на кожному пристрої — у звіті.
+
+## CI і деплой
+
+`.github/workflows/ci.yml` на кожен push і PR: typecheck, unit-тести, збірка, e2e на Chromium + WebKit; звіт зі скриншотами — артефакт `playwright-report`. Деплой на GitHub Pages — лише з гілки за замовчуванням і лише якщо все зелене.
 
 1. Settings → Pages → **Source: GitHub Actions**.
-2. Push у `main` — workflow `.github/workflows/deploy.yml` протестує, збере й опублікує сайт на `https://<user>.github.io/<repo>/`.
+2. Settings → General → **Default branch: `main`**.
 
 Base path береться з назви репозиторію (`BASE_PATH`). Deep links і refresh працюють завдяки `404.html` (копія `index.html`, генерується під час збірки), офлайн — завдяки service worker (`sw/sw.template.js` → `dist/sw.js`).
 
