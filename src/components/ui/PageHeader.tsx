@@ -6,15 +6,18 @@ import { IconButton } from './Button';
 interface Props {
   title: ReactNode;
   subtitle?: ReactNode;
+  /** Small caps line above the title (e.g. today's date). */
+  eyebrow?: ReactNode;
   /** Shows a back button; value is where to go when there is no in-app history. */
   backTo?: string;
   actions?: ReactNode;
 }
 
-export function PageHeader({ title, subtitle, backTo, actions }: Props) {
+export function PageHeader({ title, subtitle, eyebrow, backTo, actions }: Props) {
   const { back } = useRouter();
   return (
     <header className={`page-header${backTo ? ' page-header--sub' : ''}`}>
+      {eyebrow && <p className="page-header__eyebrow">{eyebrow}</p>}
       <div className="page-header__row">
         {backTo && (
           <IconButton label="Назад" onClick={() => back(backTo)} className="page-header__back">

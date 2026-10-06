@@ -8,6 +8,7 @@ import { Button, IconButton } from '../components/ui/Button';
 import { Segmented } from '../components/ui/Segmented';
 import { EmptyState } from '../components/ui/EmptyState';
 import { HistoryItem } from '../components/history/HistoryItem';
+import { Group } from '../components/ui/List';
 
 type Filter = 'all' | 'paid' | 'waiting';
 
@@ -53,8 +54,8 @@ export function HistoryPage() {
             : undefined
         }
         actions={
-          <IconButton label="Новий розрахунок" to="/calculate?new=1">
-            <Plus size={20} />
+          <IconButton label="Новий розрахунок" to="/calculate?new=1" tone="accent">
+            <Plus size={22} strokeWidth={2.6} />
           </IconButton>
         }
       />
@@ -92,14 +93,22 @@ export function HistoryPage() {
             />
           ) : (
             groups.map(([year, items]) => (
-              <section key={year} className="history-group">
-                {groups.length > 1 && <h2 className="history-group__year">{year}</h2>}
-                <ul className="list-card">
-                  {items.map(({ r }) => (
-                    <HistoryItem key={r.id} record={r} />
-                  ))}
-                </ul>
-              </section>
+              <Group
+                key={year}
+                id={`year-${year}`}
+                className="history-group"
+                list
+                title={year}
+                action={
+                  <span className="group-list__meta num">
+                    на руки {formatUAH(items.reduce((s, x) => s + x.c.netIncome, 0))}
+                  </span>
+                }
+              >
+                {items.map(({ r }) => (
+                  <HistoryItem key={r.id} record={r} />
+                ))}
+              </Group>
             ))
           )}
         </>

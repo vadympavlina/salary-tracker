@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import type { ThemePreference } from '../types/salary';
 
-const META_COLORS = { light: '#F5F5FA', dark: '#0C0C13' } as const;
+const META_COLORS = { light: '#F2F2F7', dark: '#000000' } as const;
 
 /** Applies the theme to <html data-theme> and the browser/status-bar color. */
 export function applyTheme(pref: ThemePreference) {

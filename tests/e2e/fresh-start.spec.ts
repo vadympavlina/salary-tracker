@@ -30,7 +30,7 @@ test('first launch: empty, real defaults (400 / 50, card 15 961, no advance)', a
   await expect(field(page, 'Ставка за пару')).toHaveValue('400');
   await expect(field(page, 'Ставка за відео')).toHaveValue('50');
   await expect(field(page, 'Аванс')).toHaveValue('');
-  await expect(field(page, 'Сума, яка прийшла на картку')).toHaveValue(nb('15 961'));
+  await expect(field(page, 'На картку')).toHaveValue(nb('15 961'));
 
   // 20 × 400 + 400 × 50 = 28 000; на руки = 28 000 − 15 961 = 12 039
   await field(page, 'Кількість пар').fill('20');
@@ -53,7 +53,7 @@ test('counter on a fresh install creates the month with the standard card amount
   await page.getByRole('link', { name: 'Новий розрахунок' }).first().click();
   await expect(field(page, 'Кількість пар')).toHaveValue('3');
   await expect(field(page, 'Ставка за пару')).toHaveValue('400');
-  await expect(field(page, 'Сума, яка прийшла на картку')).toHaveValue(nb('15 961'));
+  await expect(field(page, 'На картку')).toHaveValue(nb('15 961'));
 });
 
 test('old demo rows are removed on update, own months stay', async ({ page }) => {

@@ -10,7 +10,6 @@ import { Button, IconButton } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { EmptyState } from '../components/ui/EmptyState';
 import { SalaryCard } from '../components/salary/SalaryCard';
-import { MoneySummary } from '../components/salary/MoneySummary';
 import { CalculationBreakdown } from '../components/salary/CalculationBreakdown';
 import { STATUS_LABEL } from '../components/salary/PaymentStatus';
 import { NoteCard } from '../components/salary/NoteCard';
@@ -78,8 +77,7 @@ export function RecordPage({ id }: { id: string }) {
   return (
     <>
       <PageHeader
-        title="Деталі розрахунку"
-        subtitle={title}
+        title={title}
         backTo="/history"
         actions={
           <IconButton label="Поділитися або скопіювати" onClick={share}>
@@ -99,16 +97,18 @@ export function RecordPage({ id }: { id: string }) {
       <div className="detail-layout">
         <div className="stack">
           <SalaryCard record={record} calc={calc} change={change} />
-          <MoneySummary calc={calc} />
           <NoteCard note={record.note} />
-          <p className="meta">
-            Створено {formatDateTime(record.createdAt)}
-            {record.updatedAt !== record.createdAt && <> · змінено {formatDateTime(record.updatedAt)}</>}
-          </p>
         </div>
-        <div className="card">
-          <CalculationBreakdown input={record} calc={calc} />
-        </div>
+        <CalculationBreakdown
+          input={record}
+          calc={calc}
+          footer={
+            <>
+              Створено {formatDateTime(record.createdAt)}
+              {record.updatedAt !== record.createdAt && <> · змінено {formatDateTime(record.updatedAt)}</>}
+            </>
+          }
+        />
       </div>
       <div className="action-bar action-bar--sticky">
         <Button variant="danger" icon={<Trash2 size={18} />} onClick={() => setConfirm(true)}>

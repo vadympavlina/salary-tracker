@@ -7,7 +7,6 @@ import { formatPeriod, shiftPeriod } from '../utils/period';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Button } from '../components/ui/Button';
 import { SalaryCard } from '../components/salary/SalaryCard';
-import { MoneySummary } from '../components/salary/MoneySummary';
 import { CalculationBreakdown } from '../components/salary/CalculationBreakdown';
 import { NoteCard } from '../components/salary/NoteCard';
 import { useToast } from '../components/ui/Toast';
@@ -49,12 +48,9 @@ export function ResultPage() {
       <div className="detail-layout">
         <div className="stack">
           <SalaryCard record={input} calc={calc} change={change} />
-          <MoneySummary calc={calc} />
           <NoteCard note={input.note} />
         </div>
-        <div className="card">
-          <CalculationBreakdown input={input} calc={calc} />
-        </div>
+        <CalculationBreakdown input={input} calc={calc} />
       </div>
       <div className="action-bar action-bar--sticky">
         <Button variant="secondary" icon={<PencilLine size={18} />} onClick={() => back(backTo)}>

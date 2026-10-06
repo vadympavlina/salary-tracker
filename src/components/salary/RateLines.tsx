@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { Plus, X } from 'lucide-react';
 import { NumberInput } from '../ui/fields';
 import { formatNumber, formatUAH } from '../../utils/format';
@@ -15,8 +14,6 @@ interface Props {
   countLabel: string;
   /** "Ставка за пару" / "Ставка за відео" */
   rateLabel: string;
-  countIcon: ReactNode;
-  rateIcon: ReactNode;
   lines: LineForm[];
   onChange: (lines: LineForm[]) => void;
   maxCount: number;
@@ -32,10 +29,10 @@ interface Props {
 const MAX_LINES = 5;
 
 /**
- * "count × rate" inputs with optional extra lines for a rate change mid-month.
+ * "count × rate" cells in one grouped section, with optional extra lines for a rate change mid-month.
  * The first line keeps the plain labels; extra lines are numbered.
  */
-export function RateLines({ legend, countLabel, rateLabel, countIcon, rateIcon, lines, onChange, maxCount, maxRate, rateStep, defaultRate, countError, validate }: Props) {
+export function RateLines({ legend, countLabel, rateLabel, lines, onChange, maxCount, maxRate, rateStep, defaultRate, countError, validate }: Props) {
   const update = (i: number, patch: Partial<LineForm>) => onChange(lines.map((l, j) => (j === i ? { ...l, ...patch } : l)));
   const remove = (i: number) => onChange(lines.filter((_, j) => j !== i));
   const add = () => onChange([...lines, { count: '', rate: lines[lines.length - 1]?.rate ?? String(defaultRate) }]);
@@ -43,58 +40,59 @@ export function RateLines({ legend, countLabel, rateLabel, countIcon, rateIcon, 
   const multi = lines.length > 1;
 
   return (
-    <fieldset className="group">
-      <legend className="group__title">{legend}</legend>
-      {lines.map((l, i) => {
-        const n = i + 1;
-        const rate = toNumber(l.rate);
-        return (
-          <div key={i} className={multi ? 'rate-line' : 'rate-line rate-line--single'}>
-            {multi && (
-              <div className="rate-line__head">
-                <span>Ставка {n}</span>
-                {i > 0 && (
-                  <button type="button" className="rate-line__remove" aria-label={`Прибрати ставку ${n}: ${legend.toLowerCase()}`} onClick={() => remove(i)}>
-                    <X size={16} />
-                  </button>
-                )}
-              </div>
-            )}
-            <NumberInput
-              label={i === 0 ? countLabel : `${countLabel} (ставка ${n})`}
-              value={l.count}
-              onChange={(v) => update(i, { count: v })}
-              icon={countIcon}
-              max={maxCount}
-              error={i === 0 ? countError : undefined}
-            />
-            <NumberInput
-              label={i === 0 ? rateLabel : `${rateLabel} ${n}`}
-              value={l.rate}
-              onChange={(v) => update(i, { rate: v })}
-              icon={rateIcon}
-              suffix="₴"
-              step={rateStep}
-              decimal
-              max={maxRate}
-              error={validate && toNumber(l.count) > 0 && rate <= 0 ? `Вкажи ${rateLabel.toLowerCase()}` : undefined}
-              hint={i === 0 && rate !== defaultRate && defaultRate > 0 ? `За замовчуванням ${formatUAH(defaultRate)}` : undefined}
-            />
-          </div>
-        );
-      })}
-      <div className="group__sum">
-        <span className="num">
-          {lines.map((l) => `${formatNumber(toNumber(l.count))} × ${formatUAH(toNumber(l.rate))}`).join(' + ')}
-        </span>
+    <fieldset className="group-list group-list--form">
+      <legend className="group-list__header group-list__legend">
+        <span>{legend}</span>
         <b className="num">{formatUAH(total)}</b>
+      </legend>
+      <div className="group-list__body">
+        {lines.map((l, i) => {
+          const n = i + 1;
+          const rate = toNumber(l.rate);
+          return (
+            <div key={i} className="rate-line">
+              {multi && (
+                <div className="rate-line__head">
+                  <span>Ставка {n}</span>
+                  {i > 0 && (
+                    <button type="button" className="rate-line__remove" aria-label={`Прибрати ставку ${n}: ${legend.toLowerCase()}`} onClick={() => remove(i)}>
+                      <X size={15} strokeWidth={2.6} />
+                    </button>
+                  )}
+                </div>
+              )}
+              <NumberInput
+                label={countLabel}
+                srSuffix={i === 0 ? undefined : `(ставка ${n})`}
+                value={l.count}
+                onChange={(v) => update(i, { count: v })}
+                max={maxCount}
+                error={i === 0 ? countError : undefined}
+              />
+              <NumberInput
+                label={rateLabel}
+                srSuffix={i === 0 ? undefined : String(n)}
+                value={l.rate}
+                onChange={(v) => update(i, { rate: v })}
+                suffix="₴"
+                step={rateStep}
+                decimal
+                stepper={false}
+                max={maxRate}
+                error={validate && toNumber(l.count) > 0 && rate <= 0 ? `Вкажи ${rateLabel.toLowerCase()}` : undefined}
+                hint={i === 0 && rate !== defaultRate && defaultRate > 0 ? `Зазвичай ${formatUAH(defaultRate)}` : undefined}
+              />
+            </div>
+          );
+        })}
+        {lines.length < MAX_LINES && (
+          <button type="button" className="add-line" onClick={add} aria-label={`Інша ставка: ${legend.toLowerCase()}`}>
+            <Plus size={18} strokeWidth={2.4} aria-hidden="true" />
+            Додати іншу ставку
+          </button>
+        )}
       </div>
-      {lines.length < MAX_LINES && (
-        <button type="button" className="add-line" onClick={add} aria-label={`Інша ставка: ${legend.toLowerCase()}`}>
-          <Plus size={16} aria-hidden="true" />
-          Інша ставка
-        </button>
-      )}
+      {multi && <p className="group-list__footer num">{lines.map((l) => `${formatNumber(toNumber(l.count))} × ${formatUAH(toNumber(l.rate))}`).join(' + ')}</p>}
     </fieldset>
   );
 }

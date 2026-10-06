@@ -10,12 +10,22 @@ interface FieldShellProps {
   error?: string;
   children: ReactNode;
   trailing?: ReactNode;
+  /** row: label left, value right (iOS form cell). stack: small label above a full-width value. */
+  layout?: 'row' | 'stack';
+  hideLabel?: boolean;
+  /** Extra words for screen readers only, e.g. "(ставка 2)" when the section already shows it. */
+  srSuffix?: string;
 }
 
-/** Shared visual shell: icon tile, small label above a large value. Whole card focuses the input. */
-function FieldShell({ id, label, icon, hint, error, children, trailing }: FieldShellProps) {
+/** Shared cell: label (+ hint/error under it) and the control. Tapping anywhere focuses the input. */
+function FieldShell({ id, label, icon, hint, error, children, trailing, layout = 'row', hideLabel, srSuffix }: FieldShellProps) {
+  const msg = (error || hint) && (
+    <span id={`${id}-msg`} className={error ? 'field__error' : 'field__hint'} role={error ? 'alert' : undefined}>
+      {error || hint}
+    </span>
+  );
   return (
-    <div className={`field${error ? ' field--error' : ''}`}>
+    <div className={`field field--${layout}${error ? ' field--error' : ''}`}>
       <div className="field__box" onClick={(e) => (e.currentTarget.querySelector('input, textarea') as HTMLElement | null)?.focus()}>
         {icon && (
           <span className="field__icon" aria-hidden="true">
@@ -23,18 +33,16 @@ function FieldShell({ id, label, icon, hint, error, children, trailing }: FieldS
           </span>
         )}
         <div className="field__main">
-          <label htmlFor={id} className="field__label">
+          <label htmlFor={id} className={hideLabel ? 'sr-only' : 'field__label'}>
             {label}
+            {srSuffix && <span className="sr-only"> {srSuffix}</span>}
           </label>
-          {children}
+          {layout === 'stack' ? children : msg}
         </div>
+        {layout === 'row' && <div className="field__control">{children}</div>}
         {trailing}
       </div>
-      {(error || hint) && (
-        <p id={`${id}-msg`} className={error ? 'field__error' : 'field__hint'} role={error ? 'alert' : undefined}>
-          {error || hint}
-        </p>
-      )}
+      {layout === 'stack' && msg && <div className="field__below">{msg}</div>}
     </div>
   );
 }
@@ -126,10 +134,13 @@ interface NumberProps {
   /** Stepper may also step a currency-like value, e.g. rates. */
   suffix?: string;
   decimal?: boolean;
+  /** −/+ buttons next to the value (counts); rates are typed. */
+  stepper?: boolean;
+  srSuffix?: string;
 }
 
 /** Integer (or rate) input with large −/+ steppers. Press-and-hold repeats. */
-export function NumberInput({ label, value, onChange, icon, hint, error, max = 100_000, step = 1, suffix, decimal = false }: NumberProps) {
+export function NumberInput({ label, value, onChange, icon, hint, error, max = 100_000, step = 1, suffix, decimal = false, stepper: withStepper = true, srSuffix }: NumberProps) {
   const id = useId();
   const display = suffix ? groupAmount(value) : value;
   const { ref, remember } = useCaretKeeper(display);
@@ -165,7 +176,7 @@ export function NumberInput({ label, value, onChange, icon, hint, error, max = 1
     <button
       type="button"
       className="stepper__btn"
-      aria-label={`${dir > 0 ? 'Збільшити' : 'Зменшити'}: ${label}`}
+      aria-label={`${dir > 0 ? 'Збільшити' : 'Зменшити'}: ${label}${srSuffix ? ` ${srSuffix}` : ''}`}
       disabled={dir < 0 ? n <= 0 : n >= max}
       onPointerDown={(e) => {
         if (e.button !== 0) return;
@@ -183,7 +194,7 @@ export function NumberInput({ label, value, onChange, icon, hint, error, max = 1
       }}
       onContextMenu={(e) => e.preventDefault()}
     >
-      {dir > 0 ? <Plus size={20} strokeWidth={2.2} /> : <Minus size={20} strokeWidth={2.2} />}
+      {dir > 0 ? <Plus size={19} strokeWidth={2.4} /> : <Minus size={19} strokeWidth={2.4} />}
     </button>
   );
 
@@ -191,14 +202,18 @@ export function NumberInput({ label, value, onChange, icon, hint, error, max = 1
     <FieldShell
       id={id}
       label={label}
+      srSuffix={srSuffix}
       icon={icon}
       hint={hint}
       error={error}
       trailing={
-        <div className="stepper" onClick={(e) => e.stopPropagation()}>
-          {stepper(-1)}
-          {stepper(1)}
-        </div>
+        withStepper ? (
+          <div className="stepper" onClick={(e) => e.stopPropagation()}>
+            {stepper(-1)}
+            <span className="stepper__sep" aria-hidden="true" />
+            {stepper(1)}
+          </div>
+        ) : undefined
       }
     >
       <div className="field__value-row">
@@ -250,7 +265,7 @@ interface TextProps {
 export function TextInput({ label, value, onChange, autoComplete, maxLength = 60, type = 'text', icon, trailing, error, inputMode, enterKeyHint }: TextProps) {
   const id = useId();
   return (
-    <FieldShell id={id} label={label} icon={icon} trailing={trailing} error={error}>
+    <FieldShell id={id} label={label} icon={icon} trailing={trailing} error={error} layout="stack">
       <input
         id={id}
         className="field__input field__input--text"
@@ -277,13 +292,14 @@ interface TextAreaProps {
   placeholder?: string;
   maxLength?: number;
   icon?: ReactNode;
+  hideLabel?: boolean;
 }
 
 /** Multi-line text (notes). Grows with content. */
-export function TextArea({ label, value, onChange, placeholder, maxLength = 500, icon }: TextAreaProps) {
+export function TextArea({ label, value, onChange, placeholder, maxLength = 500, icon, hideLabel }: TextAreaProps) {
   const id = useId();
   return (
-    <FieldShell id={id} label={label} icon={icon} hint={value.length > maxLength * 0.8 ? `${value.length}/${maxLength}` : undefined}>
+    <FieldShell id={id} label={label} icon={icon} layout="stack" hideLabel={hideLabel} hint={value.length > maxLength * 0.8 ? `${value.length}/${maxLength}` : undefined}>
       <textarea
         id={id}
         className="field__input field__input--area"

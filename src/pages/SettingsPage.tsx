@@ -13,9 +13,11 @@ import { Modal } from '../components/ui/Modal';
 import { CurrencyInput, TextInput } from '../components/ui/fields';
 import { Segmented } from '../components/ui/Segmented';
 import { useToast } from '../components/ui/Toast';
+import { Group, Tile, type TileColor } from '../components/ui/List';
 
 interface RowProps {
   icon: ReactNode;
+  color: TileColor;
   label: string;
   value?: ReactNode;
   /** Second line under the label (e.g. sync status). */
@@ -24,19 +26,17 @@ interface RowProps {
   danger?: boolean;
 }
 
-function Row({ icon, label, value, sub, onClick, danger }: RowProps) {
+function Row({ icon, color, label, value, sub, onClick, danger }: RowProps) {
   return (
     <li>
-      <button type="button" className={`row${danger ? ' row--danger' : ''}`} onClick={onClick}>
-        <span className="row__icon" aria-hidden="true">
-          {icon}
-        </span>
+      <button type="button" className={`row row--action${danger ? ' row--danger' : ''}`} onClick={onClick}>
+        <Tile color={color}>{icon}</Tile>
         <span className="row__label">
-          {label}
+          <span className="row__title">{label}</span>
           {sub && <small className="row__sub">{sub}</small>}
         </span>
         {value !== undefined && <span className="row__value num">{value}</span>}
-        <ChevronRight className="row__chevron" size={18} aria-hidden="true" />
+        <ChevronRight className="row__chevron" size={18} strokeWidth={2.4} aria-hidden="true" />
       </button>
     </li>
   );
@@ -53,7 +53,7 @@ const SYNC_LABEL: Record<SyncStatus, string> = {
 };
 
 const THEME_LABEL: Record<ThemePreference, string> = { light: 'Світла', dark: 'Темна', system: 'Як у системі' };
-const THEME_ICON: Record<ThemePreference, ReactNode> = { light: <Sun size={19} />, dark: <Moon size={19} />, system: <SunMoon size={19} /> };
+const THEME_ICON: Record<ThemePreference, ReactNode> = { light: <Sun size={17} strokeWidth={2.3} />, dark: <Moon size={17} strokeWidth={2.3} />, system: <SunMoon size={17} strokeWidth={2.3} /> };
 
 const RATE_META = {
   pairRate: { title: 'Ставка за пару', label: 'Ставка за пару', icon: <Banknote size={20} /> },
@@ -147,69 +147,52 @@ export function SettingsPage() {
           <span className="avatar">{initials}</span>
           <span className="profile-card__text">
             <b>{profile.fullName}</b>
-            <small>Особистий профіль · привітання «{profile.firstName}»</small>
+            <small>Привітання: «{profile.firstName}»</small>
           </span>
           <ChevronRight size={18} className="row__chevron" aria-hidden="true" />
         </button>
 
-        <section className="settings__section">
-          <h2 className="settings__title">Параметри розрахунку</h2>
-          <ul className="list-card">
-            <Row icon={<Banknote size={19} />} label="Ставка за пару" value={formatUAH(settings.pairRate)} onClick={() => open('pairRate')} />
-            <Row icon={<Wallet size={19} />} label="Ставка за відео" value={formatUAH(settings.videoRate)} onClick={() => open('videoRate')} />
-            <Row icon={<CreditCard size={19} />} label="Сума на картку" value={settings.defaultCard ? formatUAH(settings.defaultCard) : 'Немає'} onClick={() => open('defaultCard')} />
-            <Row icon={<HandCoins size={19} />} label="Типовий аванс" value={settings.defaultAdvance ? formatUAH(settings.defaultAdvance) : 'Немає'} onClick={() => open('defaultAdvance')} />
-            <Row icon={<Scale size={19} />} label="Режим авансу" value={settings.advanceMode === 'part' ? 'Частина ЗП' : 'Додатковий'} onClick={() => open('advanceMode')} />
-          </ul>
-          <p className="settings__note">Ставки й сума на картку автоматично підставляються в кожен новий місяць — для конкретного місяця їх можна змінити. Збережені розрахунки не змінюються.</p>
-        </section>
+        <Group title="Параметри розрахунку" list footer="Ставки й сума на картку підставляються в кожен новий місяць — для конкретного місяця їх можна змінити. Збережені розрахунки не змінюються.">
+            <Row color="violet" icon={<Banknote size={17} strokeWidth={2.3} />} label="Ставка за пару" value={formatUAH(settings.pairRate)} onClick={() => open('pairRate')} />
+            <Row color="blue" icon={<Wallet size={17} strokeWidth={2.3} />} label="Ставка за відео" value={formatUAH(settings.videoRate)} onClick={() => open('videoRate')} />
+            <Row color="teal" icon={<CreditCard size={17} strokeWidth={2.3} />} label="Сума на картку" value={settings.defaultCard ? formatUAH(settings.defaultCard) : 'Немає'} onClick={() => open('defaultCard')} />
+            <Row color="green" icon={<HandCoins size={17} strokeWidth={2.3} />} label="Типовий аванс" value={settings.defaultAdvance ? formatUAH(settings.defaultAdvance) : 'Немає'} onClick={() => open('defaultAdvance')} />
+            <Row color="orange" icon={<Scale size={17} strokeWidth={2.3} />} label="Режим авансу" value={settings.advanceMode === 'part' ? 'Частина ЗП' : 'Додатковий'} onClick={() => open('advanceMode')} />
+          </Group>
 
-        <section className="settings__section">
-          <h2 className="settings__title">Вигляд</h2>
-          <ul className="list-card">
-            <Row icon={THEME_ICON[settings.theme]} label="Тема" value={THEME_LABEL[settings.theme]} onClick={() => open('theme')} />
-          </ul>
-        </section>
 
-        <section className="settings__section">
-          <h2 className="settings__title">Синхронізація</h2>
-          <ul className="list-card">
+        <Group title="Вигляд" list>
+            <Row color="violet" icon={THEME_ICON[settings.theme]} label="Тема" value={THEME_LABEL[settings.theme]} onClick={() => open('theme')} />
+          </Group>
+
+
+        <Group title="Синхронізація" list footer={signedIn
+              ? 'Дані зберігаються в хмарі Firebase й на цьому пристрої — працює й без інтернету, синхронізується, щойно з’явиться мережа.'
+              : 'Зараз дані лише на цьому пристрої. Увійди, щоб вони зберігались у хмарі й були на всіх пристроях.'}>
             {signedIn ? (
               <>
-                <Row icon={<Cloud size={19} />} label={cloud.user!.email ?? 'Акаунт'} sub={SYNC_LABEL[cloud.status]} onClick={() => open('account')} />
-                <Row icon={<LogOut size={19} />} label="Вийти" onClick={() => open('signOut')} />
+                <Row color="blue" icon={<Cloud size={17} strokeWidth={2.3} />} label={cloud.user!.email ?? 'Акаунт'} sub={SYNC_LABEL[cloud.status]} onClick={() => open('account')} />
+                <Row color="grey" icon={<LogOut size={17} strokeWidth={2.3} />} label="Вийти" onClick={() => open('signOut')} />
               </>
             ) : (
-              <Row icon={<CloudOff size={19} />} label="Увійти для синхронізації" value="Вимкнено" onClick={cloud.requestSignIn} />
+              <Row color="grey" icon={<CloudOff size={17} strokeWidth={2.3} />} label="Увійти для синхронізації" onClick={cloud.requestSignIn} />
             )}
-          </ul>
-          <p className="settings__note">
-            {signedIn
-              ? 'Дані зберігаються в хмарі Firebase й на цьому пристрої — працює й без інтернету, синхронізується, щойно з’явиться мережа.'
-              : 'Зараз дані лише на цьому пристрої. Увійди, щоб вони зберігались у хмарі й були на всіх пристроях.'}
-          </p>
-        </section>
+          </Group>
 
-        <section className="settings__section">
-          <h2 className="settings__title">Дані</h2>
-          <ul className="list-card">
-            <Row icon={<Download size={19} />} label="Експорт даних" value="JSON" onClick={exportData} />
-            <Row icon={<Upload size={19} />} label="Імпорт даних" onClick={() => fileRef.current?.click()} />
-            <Row icon={<Trash2 size={19} />} label="Видалити всі дані" onClick={() => open('clearAll')} danger />
-          </ul>
-          <p className="settings__note">
-            {signedIn ? 'Експорт — додаткова резервна копія у файл (JSON).' : 'Дані зберігаються лише на цьому пристрої. Роби експорт, щоб мати резервну копію або перенести дані.'}
-          </p>
+
+        <Group title="Дані" list footer={signedIn ? 'Експорт — додаткова резервна копія у файл (JSON).' : 'Дані зберігаються лише на цьому пристрої. Роби експорт, щоб мати резервну копію або перенести дані.'}>
+            <Row color="blue" icon={<Download size={17} strokeWidth={2.3} />} label="Експорт даних" value="JSON" onClick={exportData} />
+            <Row color="green" icon={<Upload size={17} strokeWidth={2.3} />} label="Імпорт даних" onClick={() => fileRef.current?.click()} />
+            <Row color="red" icon={<Trash2 size={17} strokeWidth={2.3} />} label="Видалити всі дані" onClick={() => open('clearAll')} danger />
+          </Group>
           <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={(e) => onFile(e.target.files?.[0])} />
-        </section>
+
 
         {!isStandalone() && (
-          <section className="settings__section">
-            <h2 className="settings__title">Застосунок</h2>
-            <ul className="list-card">
-              <Row icon={<Smartphone size={19} />} label="Додати на головний екран" onClick={installApp} />
-            </ul>
-          </section>
+          <Group title="Застосунок" list>
+              <Row color="violet" icon={<Smartphone size={17} strokeWidth={2.3} />} label="Додати на головний екран" onClick={installApp} />
+            </Group>
+
         )}
 
         <p className="settings__footer">Зарплата · версія {__APP_VERSION__}</p>

@@ -18,25 +18,29 @@
 }
 .fade-in { animation: page-in 0.26s var(--ease) backwards; }
 
-.stack { display: flex; flex-direction: column; gap: 14px; }
+.stack { display: flex; flex-direction: column; gap: 22px; }
 
-/* ---------- Page header ---------- */
-.page-header { padding: 6px 2px 18px; }
+/* ---------- Page header (iOS large title) ---------- */
+.page-header { padding: 8px 4px 18px; }
+.page-header__eyebrow { margin-bottom: 2px; font-size: 13px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.02em; }
 .page-header__row { display: flex; align-items: center; gap: 10px; min-height: 44px; }
 .page-header__title {
   flex: 1;
-  font-size: 30px;
-  line-height: 1.12;
-  font-weight: 750;
-  letter-spacing: -0.025em;
+  min-width: 0;
+  font-size: 34px;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.03em;
 }
-.page-header--sub .page-header__title { font-size: 22px; letter-spacing: -0.02em; }
+.page-header--sub .page-header__title { font-size: 26px; letter-spacing: -0.025em; }
 @media (max-width: 359px) {
-  .page-header__title { font-size: 26px; }
+  .page-header__title { font-size: 28px; }
+  .page-header--sub .page-header__title { font-size: 22px; }
 }
-.page-header__subtitle { margin-top: 4px; color: var(--text-2); font-size: 15px; }
-.page-header--sub .page-header__subtitle { padding-left: 54px; }
+.page-header__subtitle { margin-top: 4px; color: var(--text-3); font-size: 15px; }
+.page-header--sub .page-header__subtitle { padding-left: 50px; }
 .page-header__actions { display: flex; gap: 8px; }
+.page-header__back { margin-left: -4px; }
 
 /* ---------- Bottom tab bar (floating glass) ---------- */
 .tabbar {
@@ -46,29 +50,29 @@
   transform: translateX(-50%);
   width: min(calc(100% - 20px), 520px);
   z-index: 40;
-  border-radius: 30px;
+  border-radius: 32px;
   background: var(--surface-glass);
-  -webkit-backdrop-filter: blur(22px) saturate(180%);
-  backdrop-filter: blur(22px) saturate(180%);
-  border: 1px solid var(--glass-border);
-  box-shadow: 0 0 0 0.5px rgba(21, 21, 43, 0.06), 0 10px 34px -10px rgba(21, 21, 43, 0.22);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  border: 0.5px solid var(--glass-border);
+  box-shadow: 0 0 0 0.5px var(--border), 0 10px 34px -12px rgba(21, 21, 43, 0.28);
 }
-.tabbar__list { display: grid; grid-template-columns: repeat(5, 1fr); padding: 6px; }
+.tabbar__list { display: grid; grid-template-columns: repeat(5, 1fr); padding: 5px; }
 .tabbar__item {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 3px;
-  height: 54px;
-  border-radius: 24px;
+  height: 52px;
+  border-radius: 27px;
   font-size: 10.5px;
   font-weight: 600;
-  color: var(--text-3);
+  color: var(--text-2);
   transition: color 0.2s, background-color 0.25s var(--ease), transform 0.15s;
 }
 .tabbar__item:active { transform: scale(0.94); }
-.tabbar__item.is-active { color: var(--accent-text); background: var(--accent-soft); }
+.tabbar__item.is-active { color: var(--accent-text); background: var(--fill); }
 .tabbar__item span { white-space: nowrap; }
 
 /* ---------- Sidebar (desktop) ---------- */
@@ -96,10 +100,10 @@
 .action-bar .grow { flex: 1; }
 
 /* ---------- Layout helpers per page ---------- */
-.dashboard { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; }
-.dashboard__side { gap: 18px; }
+.dashboard { display: grid; grid-template-columns: minmax(0, 1fr); gap: 26px; }
+.dashboard__side { gap: 26px; }
 
-.detail-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.detail-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 26px; }
 
 .calc__layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .calc__summary {
@@ -110,7 +114,7 @@
 }
 .app--pushed .calc__summary { bottom: calc(12px + var(--safe-b)); }
 
-.toolbar { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.toolbar { display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px; }
 
 /* ---------- Tablet ---------- */
 @media (min-width: 700px) {
@@ -136,8 +140,10 @@
     flex-direction: column;
     gap: 18px;
     padding: 26px 16px 20px;
-    background: var(--surface);
-    border-right: 1px solid var(--border);
+    background: var(--surface-glass);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(24px) saturate(180%);
+    border-right: 0.5px solid var(--separator);
     z-index: 40;
   }
   .sidebar__brand { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 8px; font-weight: 750; font-size: 19px; letter-spacing: -0.02em; }
@@ -151,13 +157,13 @@
     color: var(--text-2); font-weight: 600; font-size: 15px;
     transition: background-color 0.15s, color 0.15s;
   }
-  .sidebar__item:hover { background: var(--surface-2); color: var(--text); }
-  .sidebar__item.is-active { background: var(--accent-soft); color: var(--accent-text); }
+  .sidebar__item:hover { background: var(--fill); color: var(--text); }
+  .sidebar__item.is-active { background: var(--accent-fill); color: #fff; }
   .sidebar__profile {
     margin-top: auto; display: flex; align-items: center; gap: 12px;
     padding: 10px; border-radius: var(--r-md);
   }
-  .sidebar__profile:hover { background: var(--surface-2); }
+  .sidebar__profile:hover { background: var(--fill); }
   .sidebar__profile b { display: block; font-size: 14px; }
   .sidebar__profile small { color: var(--text-3); font-size: 12px; }
 
@@ -165,11 +171,13 @@
   .page { max-width: 1240px; margin: 0 auto; }
   .app--pushed .main { padding-bottom: 48px; }
   .page-header__title { font-size: 34px; }
+  .page-header { padding-top: 0; }
 
-  .dashboard { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: start; }
+  .dashboard { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 28px; }
   .home-cta { display: none !important; }
 
-  .detail-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 20px; }
+  .detail-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); align-items: start; gap: 28px; }
+  .detail-layout > .stack { position: sticky; top: 36px; }
   /* Floating glass bar pinned to the bottom-right of the content column. */
   .action-bar--sticky {
     position: sticky;
@@ -187,12 +195,11 @@
   }
   .action-bar--sticky .grow { flex: 0 0 auto; min-width: 200px; }
 
-  .calc__layout { grid-template-columns: minmax(0, 1fr) 300px; align-items: start; gap: 24px; }
+  .calc__layout { grid-template-columns: minmax(0, 1fr) 300px; align-items: start; gap: 28px; }
   .calc__summary { position: sticky; top: 36px; bottom: auto; margin: 0; }
   .action-bar--calc { flex-direction: column; align-items: stretch; padding: 22px; }
   .action-bar--calc .live-total b { font-size: 32px; }
 
-  .history-group .list-card,
   .analytics { max-width: none; }
   .analytics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
   .analytics > .chart-card:first-child { grid-column: 1 / -1; }
@@ -205,9 +212,8 @@
 @media (min-width: 1280px) {
   :root { --sidebar-w: 260px; --gutter: 36px; }
   .calc__layout { grid-template-columns: minmax(0, 1fr) 340px; }
-  .calc__fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
-  .calc__fields > .month-picker,
-  .calc__fields > .notice,
+  .calc__fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 26px 20px; align-items: start; }
+  .calc__fields > .calc__period,
   .calc__fields > .chip--block { grid-column: 1 / -1; }
 }
 
@@ -250,7 +256,7 @@
     display: flex; align-items: center; justify-content: center;
     width: 52px; height: 46px; border-radius: 15px; color: var(--text-3);
   }
-  .sidebar__item.is-active { background: var(--accent-soft); color: var(--accent-text); }
+  .sidebar__item.is-active { background: var(--fill); color: var(--accent-text); }
   .sidebar__profile { margin-top: auto; padding: 3px; }
   .sidebar__profile .avatar { width: 42px; height: 42px; }
   .main {

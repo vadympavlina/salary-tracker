@@ -37,7 +37,7 @@ export function Button({ variant = 'primary', size = 'lg', icon, block, to, clas
 interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   label: string;
   to?: string;
-  tone?: 'plain' | 'surface';
+  tone?: 'plain' | 'surface' | 'accent';
 }
 
 export function IconButton({ label, to, tone = 'surface', className = '', children, type = 'button', ...rest }: IconButtonProps) {

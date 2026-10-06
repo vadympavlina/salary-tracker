@@ -5,7 +5,7 @@ const PAGES = [
   { name: 'Головна', path: './', heading: /Привіт/ },
   { name: 'Розрахунок', path: '#/calculate?new=1', heading: 'Розрахунок' },
   { name: 'Історія', path: '#/history', heading: 'Історія' },
-  { name: 'Деталі', path: '#/history/:first', heading: 'Деталі розрахунку', pushed: true },
+  { name: 'Деталі', path: '#/history/:first', heading: /\d{4}/, pushed: true },
   { name: 'Аналітика', path: '#/analytics', heading: 'Аналітика' },
   { name: 'Налаштування', path: '#/settings', heading: 'Налаштування' },
 ];

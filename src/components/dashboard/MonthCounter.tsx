@@ -6,6 +6,7 @@ import { currentPeriod, formatPeriod } from '../../utils/period';
 import { formatNumber, formatUAH, plural } from '../../utils/format';
 import { Link } from '../../router/router';
 import { useToast } from '../ui/Toast';
+import { Group, Tile } from '../ui/List';
 
 type Kind = 'pairs' | 'videos';
 
@@ -23,26 +24,26 @@ export function MonthCounter() {
   const earned = (calc?.pairIncome ?? 0) + (calc?.videoIncome ?? 0);
 
   return (
-    <section className="counter card" aria-labelledby="counter-title">
-      <div className="counter__head">
-        <div>
-          <h2 id="counter-title" className="card__title">
-            Цей місяць
-          </h2>
-          <p className="counter__sub">{formatPeriod(period)} · рахуй по ходу роботи</p>
-        </div>
-        {record && (
+    <Group
+      className="counter"
+      id="counter"
+      title="Цей місяць"
+      action={
+        record ? (
           <Link to={`/history/${record.id}`} className="link">
             Відкрити
           </Link>
-        )}
-      </div>
-      <CounterRow kind="pairs" label="Пари" forms={['пара', 'пари', 'пар']} value={pairs} icon={<UsersRound size={20} />} onBump={bumpCurrentMonth} />
-      <CounterRow kind="videos" label="Відео" forms={['відео', 'відео', 'відео']} value={videos} icon={<CirclePlay size={20} />} onBump={bumpCurrentMonth} />
-      <p className="counter__total">
-        За пари й відео: <b className="num">{formatUAH(earned)}</b>
-      </p>
-    </section>
+        ) : undefined
+      }
+      footer={
+        <>
+          {formatPeriod(period)} · за пари й відео <b className="num">{formatUAH(earned)}</b>
+        </>
+      }
+    >
+      <CounterRow kind="pairs" label="Пари" forms={['пара', 'пари', 'пар']} value={pairs} icon={<Tile color="violet"><UsersRound size={17} strokeWidth={2.4} /></Tile>} onBump={bumpCurrentMonth} />
+      <CounterRow kind="videos" label="Відео" forms={['відео', 'відео', 'відео']} value={videos} icon={<Tile color="blue"><CirclePlay size={17} strokeWidth={2.4} /></Tile>} onBump={bumpCurrentMonth} />
+    </Group>
   );
 }
 
@@ -105,20 +106,20 @@ function CounterRow({ kind, label, forms, value, icon, onBump }: RowProps) {
 
   return (
     <div className="counter__row">
-      <span className="counter__icon" aria-hidden="true">
-        {icon}
-      </span>
+      {icon}
       <span className="counter__label">{label}</span>
       <span key={pop} className="counter__value num pop" aria-live="polite" aria-atomic="true">
         {formatNumber(value)}
         <span className="sr-only"> {plural(value, forms)}</span>
       </span>
-      <button type="button" className="counter__btn" aria-label={`${label}: мінус один`} disabled={value <= 0} {...press(-1)}>
-        <Minus size={20} strokeWidth={2.4} />
-      </button>
-      <button type="button" className="counter__btn counter__btn--plus" aria-label={`${label}: плюс один`} {...press(1)}>
-        <Plus size={22} strokeWidth={2.6} />
-      </button>
+      <span className="counter__controls">
+        <button type="button" className="counter__btn" aria-label={`${label}: мінус один`} disabled={value <= 0} {...press(-1)}>
+          <Minus size={19} strokeWidth={2.6} />
+        </button>
+        <button type="button" className="counter__btn counter__btn--plus" aria-label={`${label}: плюс один`} {...press(1)}>
+          <Plus size={21} strokeWidth={2.8} />
+        </button>
+      </span>
     </div>
   );
 }

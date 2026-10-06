@@ -22,7 +22,7 @@ test('full flow: create → calculate → save → history → edit → delete �
   await field(page, 'Аванс').fill('5000');
   await expect(field(page, 'Аванс')).toHaveValue(nb('5 000'));
   await field(page, 'Додаткові').fill('1200');
-  await field(page, 'Сума, яка прийшла на картку').fill('10000');
+  await field(page, 'На картку').fill('10000');
   await expect(page.locator('.hand-callout b')).toHaveText(uah('1 560'));
   await expect(page.locator('.live-total b')).toHaveText(uah('1 560'));
 
@@ -40,7 +40,7 @@ test('full flow: create → calculate → save → history → edit → delete �
 
   // 5. Deep-link refresh + history filter
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Деталі розрахунку' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Листопад 2026', level: 1 })).toBeVisible();
   await page.goto('#/history');
   await expect(page.getByRole('link', { name: /Листопад 2026/ })).toBeVisible();
   await page.getByRole('radio', { name: /В очікуванні/ }).click();

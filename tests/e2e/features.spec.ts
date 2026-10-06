@@ -86,7 +86,7 @@ test('theme: light by default, dark and system from settings, no flash on reload
   await page.getByRole('dialog').getByRole('radio', { name: 'Темна', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-  expect(bg).toBe('rgb(12, 12, 19)');
+  expect(bg).toBe('rgb(0, 0, 0)');
   await page.getByRole('dialog').getByRole('button', { name: 'Готово' }).click();
   await expect(page.getByRole('button', { name: /Тема.*Темна/ })).toBeVisible();
 
