@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { SalaryCalculation, SalaryInput } from '../../types/salary';
+import type { RateLine, SalaryCalculation, SalaryInput } from '../../types/salary';
 import { formatNumber, formatUAH } from '../../utils/format';
 
 interface RowProps {
@@ -31,20 +31,39 @@ function Group({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
+/** One rate: "Пари 12 / Ставка 350 ₴". Several rates: one "12 × 350 ₴ = 4 200 ₴" row each. */
+function Lines({ lines, countLabel, rateLabel }: { lines: RateLine[]; countLabel: string; rateLabel: string }) {
+  if (lines.length <= 1) {
+    const l = lines[0] ?? { count: 0, rate: 0 };
+    return (
+      <>
+        <Row label={countLabel} value={formatNumber(l.count)} />
+        <Row label={rateLabel} value={formatUAH(l.rate)} />
+      </>
+    );
+  }
+  return (
+    <>
+      {lines.map((l, i) => (
+        <Row key={i} label={`${formatNumber(l.count)} × ${formatUAH(l.rate)}`} value={formatUAH(l.count * l.rate)} />
+      ))}
+      <Row label={`${countLabel} разом`} value={formatNumber(lines.reduce((s, l) => s + l.count, 0))} />
+    </>
+  );
+}
+
 /** Full, human-readable breakdown of a calculation. */
 export function CalculationBreakdown({ input, calc }: { input: SalaryInput; calc: SalaryCalculation }) {
   const extra = input.advanceMode === 'extra';
   return (
     <div className="breakdown">
       <Group title="Основна частина">
-        <Row label="Пари" value={formatNumber(input.pairs)} />
-        <Row label="Ставка за пару" value={formatUAH(input.pairRate)} />
+        <Lines lines={input.pairItems} countLabel="Пари" rateLabel="Ставка за пару" />
         <Row label="Сума за пари" value={formatUAH(calc.pairIncome)} strong />
       </Group>
 
       <Group title="Перевірені відео">
-        <Row label="Відео" value={formatNumber(input.videos)} />
-        <Row label="Ставка за відео" value={formatUAH(input.videoRate)} />
+        <Lines lines={input.videoItems} countLabel="Відео" rateLabel="Ставка за відео" />
         <Row label="Сума за відео" value={formatUAH(calc.videoIncome)} strong />
       </Group>
 

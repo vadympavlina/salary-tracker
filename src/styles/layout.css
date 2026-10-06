@@ -50,7 +50,7 @@
   background: var(--surface-glass);
   -webkit-backdrop-filter: blur(22px) saturate(180%);
   backdrop-filter: blur(22px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--glass-border);
   box-shadow: 0 0 0 0.5px rgba(21, 21, 43, 0.06), 0 10px 34px -10px rgba(21, 21, 43, 0.22);
 }
 .tabbar__list { display: grid; grid-template-columns: repeat(5, 1fr); padding: 6px; }
@@ -90,7 +90,7 @@
   bottom: 0;
   z-index: 30;
   padding: 12px var(--gutter) calc(12px + var(--safe-b));
-  background: linear-gradient(to top, var(--bg) 62%, rgba(245, 245, 250, 0));
+  background: linear-gradient(to top, var(--bg) 62%, var(--bg-transparent));
 }
 .action-bar--sticky > * { max-width: 640px; }
 .action-bar .grow { flex: 1; }

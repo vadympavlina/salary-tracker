@@ -13,6 +13,7 @@ import { SalaryCard } from '../components/salary/SalaryCard';
 import { MoneySummary } from '../components/salary/MoneySummary';
 import { CalculationBreakdown } from '../components/salary/CalculationBreakdown';
 import { STATUS_LABEL } from '../components/salary/PaymentStatus';
+import { NoteCard } from '../components/salary/NoteCard';
 import { useToast } from '../components/ui/Toast';
 
 export function RecordPage({ id }: { id: string }) {
@@ -54,8 +55,9 @@ export function RecordPage({ id }: { id: string }) {
   const share = async () => {
     const text = [
       `Зарплата — ${title}`,
-      `Пари: ${formatNumber(record.pairs)} × ${formatUAH(record.pairRate)} = ${formatUAH(calc.pairIncome)}`,
-      `Відео: ${formatNumber(record.videos)} × ${formatUAH(record.videoRate)} = ${formatUAH(calc.videoIncome)}`,
+      `Пари: ${record.pairItems.map((l) => `${formatNumber(l.count)} × ${formatUAH(l.rate)}`).join(' + ')} = ${formatUAH(calc.pairIncome)}`,
+      `Відео: ${record.videoItems.map((l) => `${formatNumber(l.count)} × ${formatUAH(l.rate)}`).join(' + ')} = ${formatUAH(calc.videoIncome)}`,
+      ...(record.note ? [`Нотатка: ${record.note}`] : []),
       `Аванс: ${formatUAH(calc.advance)} · Додаткові: ${formatUAH(calc.additional)}`,
       `Всього нараховано: ${formatUAH(calc.grossIncome)}`,
       `На картку: ${formatUAH(calc.received)} · На руки: ${formatUAH(calc.netIncome)}`,
@@ -98,6 +100,7 @@ export function RecordPage({ id }: { id: string }) {
         <div className="stack">
           <SalaryCard record={record} calc={calc} change={change} />
           <MoneySummary calc={calc} />
+          <NoteCard note={record.note} />
           <p className="meta">
             Створено {formatDateTime(record.createdAt)}
             {record.updatedAt !== record.createdAt && <> · змінено {formatDateTime(record.updatedAt)}</>}

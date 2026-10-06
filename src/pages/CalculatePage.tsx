@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Banknote, ChevronLeft, ChevronRight, CirclePlay, CreditCard, Gift, HandCoins, Info, UsersRound, Wallet } from 'lucide-react';
+import { Banknote, ChevronLeft, ChevronRight, CirclePlay, CreditCard, Gift, HandCoins, Info, NotebookPen, UsersRound, Wallet } from 'lucide-react';
 import { useSalary } from '../hooks/useSalaryStore';
 import { useRouter, Link } from '../router/router';
 import { calculateSalary } from '../services/calculations/salaryCalculator';
@@ -9,42 +9,42 @@ import { formatUAH } from '../utils/format';
 import { fromNumber, toNumber } from '../utils/input';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Button } from '../components/ui/Button';
-import { CurrencyInput, NumberInput } from '../components/ui/fields';
+import { CurrencyInput, TextArea } from '../components/ui/fields';
+import { RateLines, formToLines, linesToForm, type LineForm } from '../components/salary/RateLines';
 
 interface FormState {
   period: string;
-  pairs: string;
-  pairRate: string;
-  videos: string;
-  videoRate: string;
+  pairItems: LineForm[];
+  videoItems: LineForm[];
   advance: string;
   additional: string;
   received: string;
   cashReceived: string;
+  note: string;
 }
+
+type TextKey = Exclude<keyof FormState, 'pairItems' | 'videoItems'>;
 
 const toForm = (i: SalaryInput): FormState => ({
   period: i.period,
-  pairs: fromNumber(i.pairs),
-  pairRate: fromNumber(i.pairRate),
-  videos: fromNumber(i.videos),
-  videoRate: fromNumber(i.videoRate),
+  pairItems: linesToForm(i.pairItems),
+  videoItems: linesToForm(i.videoItems),
   advance: fromNumber(i.advance),
   additional: fromNumber(i.additional),
   received: fromNumber(i.received),
   cashReceived: fromNumber(i.cashReceived),
+  note: i.note ?? '',
 });
 
 const blankForm = (s: SalarySettings, period: string): FormState => ({
   period,
-  pairs: '',
-  pairRate: fromNumber(s.pairRate),
-  videos: '',
-  videoRate: fromNumber(s.videoRate),
+  pairItems: [{ count: '', rate: fromNumber(s.pairRate) }],
+  videoItems: [{ count: '', rate: fromNumber(s.videoRate) }],
   advance: fromNumber(s.defaultAdvance),
   additional: '',
   received: '',
   cashReceived: '',
+  note: '',
 });
 
 const LIMITS = { pairs: 500, videos: 20_000, rate: 1_000_000, money: 10_000_000 };
@@ -75,15 +75,14 @@ export function CalculatePage() {
   const input: SalaryInput = useMemo(
     () => ({
       period: form.period,
-      pairs: toNumber(form.pairs),
-      pairRate: toNumber(form.pairRate),
-      videos: toNumber(form.videos),
-      videoRate: toNumber(form.videoRate),
+      pairItems: formToLines(form.pairItems),
+      videoItems: formToLines(form.videoItems),
       advance: toNumber(form.advance),
       additional: toNumber(form.additional),
       received: toNumber(form.received),
       cashReceived: toNumber(form.cashReceived),
       advanceMode: editing?.advanceMode ?? settings.advanceMode,
+      note: form.note.trim() || undefined,
     }),
     [form, editing, settings.advanceMode],
   );
@@ -95,31 +94,26 @@ export function CalculatePage() {
     return () => window.clearTimeout(t);
   }, [input, editing?.id, setDraft]);
 
-  const set = (key: keyof FormState) => (v: string) => setForm((f) => ({ ...f, [key]: v }));
+  const set = (key: TextKey) => (v: string) => setForm((f) => ({ ...f, [key]: v }));
 
   const conflict = findByPeriod(form.period);
   const conflictOther = conflict && conflict.id !== editing?.id ? conflict : undefined;
 
-  const errors = {
-    pairs: touched && !form.pairs && !form.videos && !form.additional ? 'Вкажи хоча б пари, відео або додаткові виплати' : undefined,
-    pairRate: touched && input.pairs > 0 && input.pairRate <= 0 ? 'Вкажи ставку за пару' : undefined,
-    videoRate: touched && input.videos > 0 && input.videoRate <= 0 ? 'Вкажи ставку за відео' : undefined,
-  };
-  const hasErrors = Object.values(errors).some(Boolean);
-  const isEmpty = calc.grossIncome <= 0;
+  const missingRate = [...input.pairItems, ...input.videoItems].some((l) => l.count > 0 && l.rate <= 0);
+  const isEmpty = calc.grossIncome <= 0 && !missingRate;
+  const emptyError = touched && calc.pairs === 0 && calc.videos === 0 && !toNumber(form.additional) ? 'Вкажи хоча б пари, відео або додаткові виплати' : undefined;
+  const hasErrors = missingRate || !!emptyError;
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
     setTouched(true);
-    const invalid = isEmpty || (input.pairs > 0 && input.pairRate <= 0) || (input.videos > 0 && input.videoRate <= 0);
-    if (invalid) return;
+    if (isEmpty || missingRate) return;
     setDraft({ input, editId: editing?.id });
     navigate('/calculate/result');
   };
 
   const fillCash = () => set('cashReceived')(fromNumber(calc.netIncome));
   const overpaid = calc.grossIncome > 0 && calc.advance + calc.received > calc.grossIncome;
-  const rateDiff = (v: number, def: number) => (v !== def && def > 0 ? `За замовчуванням ${formatUAH(def)}` : undefined);
   const lastRecord = records[0];
 
   return (
@@ -156,51 +150,36 @@ export function CalculatePage() {
             </p>
           )}
 
-          <fieldset className="group">
-            <legend className="group__title">Пари</legend>
-            <NumberInput label="Кількість пар" value={form.pairs} onChange={set('pairs')} icon={<UsersRound size={20} />} max={LIMITS.pairs} error={errors.pairs} />
-            <NumberInput
-              label="Ставка за пару"
-              value={form.pairRate}
-              onChange={set('pairRate')}
-              icon={<Banknote size={20} />}
-              suffix="₴"
-              step={10}
-              decimal
-              max={LIMITS.rate}
-              error={errors.pairRate}
-              hint={rateDiff(input.pairRate, settings.pairRate)}
-            />
-            <p className="group__sum">
-              <span className="num">
-                {input.pairs} × {formatUAH(input.pairRate)}
-              </span>
-              <b className="num">{formatUAH(calc.pairIncome)}</b>
-            </p>
-          </fieldset>
+          <RateLines
+            legend="Пари"
+            countLabel="Кількість пар"
+            rateLabel="Ставка за пару"
+            countIcon={<UsersRound size={20} />}
+            rateIcon={<Banknote size={20} />}
+            lines={form.pairItems}
+            onChange={(pairItems) => setForm((f) => ({ ...f, pairItems }))}
+            maxCount={LIMITS.pairs}
+            maxRate={LIMITS.rate}
+            rateStep={10}
+            defaultRate={settings.pairRate}
+            countError={emptyError}
+            validate={touched}
+          />
 
-          <fieldset className="group">
-            <legend className="group__title">Відео</legend>
-            <NumberInput label="Перевірені відео" value={form.videos} onChange={set('videos')} icon={<CirclePlay size={20} />} max={LIMITS.videos} />
-            <NumberInput
-              label="Ставка за відео"
-              value={form.videoRate}
-              onChange={set('videoRate')}
-              icon={<Wallet size={20} />}
-              suffix="₴"
-              step={1}
-              decimal
-              max={LIMITS.rate}
-              error={errors.videoRate}
-              hint={rateDiff(input.videoRate, settings.videoRate)}
-            />
-            <p className="group__sum">
-              <span className="num">
-                {input.videos} × {formatUAH(input.videoRate)}
-              </span>
-              <b className="num">{formatUAH(calc.videoIncome)}</b>
-            </p>
-          </fieldset>
+          <RateLines
+            legend="Відео"
+            countLabel="Перевірені відео"
+            rateLabel="Ставка за відео"
+            countIcon={<CirclePlay size={20} />}
+            rateIcon={<Wallet size={20} />}
+            lines={form.videoItems}
+            onChange={(videoItems) => setForm((f) => ({ ...f, videoItems }))}
+            maxCount={LIMITS.videos}
+            maxRate={LIMITS.rate}
+            rateStep={1}
+            defaultRate={settings.videoRate}
+            validate={touched}
+          />
 
           <fieldset className="group">
             <legend className="group__title">Додаткові виплати</legend>
@@ -257,17 +236,20 @@ export function CalculatePage() {
             />
           </fieldset>
 
-          {!editing && lastRecord && !form.pairs && !form.videos && (
+          <fieldset className="group">
+            <legend className="group__title">Нотатка</legend>
+            <TextArea label="Коментар до місяця" value={form.note} onChange={set('note')} icon={<NotebookPen size={20} />} placeholder="Напр.: премія за курс, затримали виплату" />
+          </fieldset>
+
+          {!editing && lastRecord && calc.pairs === 0 && calc.videos === 0 && (
             <button
               type="button"
               className="chip chip--block"
               onClick={() =>
                 setForm((f) => ({
                   ...f,
-                  pairs: fromNumber(lastRecord.pairs),
-                  pairRate: fromNumber(lastRecord.pairRate),
-                  videos: fromNumber(lastRecord.videos),
-                  videoRate: fromNumber(lastRecord.videoRate),
+                  pairItems: linesToForm(lastRecord.pairItems),
+                  videoItems: linesToForm(lastRecord.videoItems),
                   advance: fromNumber(lastRecord.advance),
                   additional: fromNumber(lastRecord.additional),
                 }))

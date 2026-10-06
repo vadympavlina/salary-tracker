@@ -1,7 +1,10 @@
-import type { PaymentStatus, SalaryCalculation, SalaryInput } from '../../types/salary';
+import type { PaymentStatus, RateLine, SalaryCalculation, SalaryInput } from '../../types/salary';
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 const safe = (n: number) => (Number.isFinite(n) && n > 0 ? n : 0);
+
+export const sumCount = (lines: RateLine[]) => lines.reduce((s, l) => s + safe(l.count), 0);
+export const sumIncome = (lines: RateLine[]) => round2(lines.reduce((s, l) => s + safe(l.count) * safe(l.rate), 0));
 
 /** Payment status: everything earned received → paid; something received → partial; nothing → pending. */
 export function getPaymentStatus(grossIncome: number, totalReceived: number): PaymentStatus {
@@ -12,14 +15,14 @@ export function getPaymentStatus(grossIncome: number, totalReceived: number): Pa
 /**
  * Pure salary calculation. No UI, no storage — safe to reuse anywhere (and on a server later).
  *
- * earned    = pairs + videos + additional (+ advance in `extra` mode)
+ * earned    = Σ pairs × rate + Σ videos × rate + additional (+ advance in `extra` mode)
  * на руки   = earned − advance − card
  * received  = advance + card + cash in hand
  * remaining = на руки − cash in hand
  */
 export function calculateSalary(input: SalaryInput): SalaryCalculation {
-  const pairIncome = round2(safe(input.pairs) * safe(input.pairRate));
-  const videoIncome = round2(safe(input.videos) * safe(input.videoRate));
+  const pairIncome = sumIncome(input.pairItems);
+  const videoIncome = sumIncome(input.videoItems);
   const advance = safe(input.advance);
   const additional = safe(input.additional);
   const received = safe(input.received);
@@ -33,6 +36,8 @@ export function calculateSalary(input: SalaryInput): SalaryCalculation {
 
 
   return {
+    pairs: sumCount(input.pairItems),
+    videos: sumCount(input.videoItems),
     pairIncome,
     videoIncome,
     extraIncome,

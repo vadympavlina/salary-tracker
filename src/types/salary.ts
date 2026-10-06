@@ -10,13 +10,21 @@ export type AdvanceMode = 'part' | 'extra';
 
 export type PaymentStatus = 'paid' | 'partial' | 'pending';
 
+export type ThemePreference = 'light' | 'dark' | 'system';
+
+/** One "count × rate" line. A month can have several when the rate changed mid-month. */
+export interface RateLine {
+  count: number;
+  rate: number;
+}
+
 /** Raw inputs the user enters for a month. Everything else is derived by `calculateSalary`. */
 export interface SalaryInput {
   period: Period;
-  pairs: number;
-  pairRate: number;
-  videos: number;
-  videoRate: number;
+  /** Pairs taught, one line per rate (usually just one). */
+  pairItems: RateLine[];
+  /** Checked videos, one line per rate (usually just one). */
+  videoItems: RateLine[];
   advance: number;
   additional: number;
   /** Amount that actually arrived on the bank card (excluding the advance). */
@@ -25,6 +33,7 @@ export interface SalaryInput {
   cashReceived: number;
   /** Snapshot of the setting at the time of saving, so history never changes retroactively. */
   advanceMode: AdvanceMode;
+  /** Free-form comment for the month. */
   note?: string;
 }
 
@@ -38,6 +47,10 @@ export interface SalaryRecord extends SalaryInput {
 }
 
 export interface SalaryCalculation {
+  /** Total pairs across all rate lines. */
+  pairs: number;
+  /** Total videos across all rate lines. */
+  videos: number;
   pairIncome: number;
   videoIncome: number;
   /** Additional payments counted as income (additional, plus advance in `extra` mode). */
@@ -65,6 +78,8 @@ export interface SalarySettings {
   advanceMode: AdvanceMode;
   /** Default advance pre-filled into a new calculation (0 = empty). */
   defaultAdvance: number;
+  /** Light by default; dark or follow the OS on request. */
+  theme: ThemePreference;
 }
 
 export interface SalaryProfile {

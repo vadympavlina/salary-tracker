@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { SalaryInput, SalaryProfile, SalaryRecord, SalarySettings } from '../types/salary';
 import { buildExport, buildRecord, salaryStorage, type AppData } from '../services/storage/salaryStorage';
 import { DEFAULT_PROFILE, DEFAULT_SETTINGS } from '../data/defaults';
+import { currentPeriod } from '../utils/period';
 
 /** A calculation in progress (between the form and the result screen). */
 export interface Draft {
@@ -37,6 +38,8 @@ interface SalaryStore extends AppData {
   findByPeriod: (period: string) => SalaryRecord | undefined;
   /** Creates or updates a record. One record per month: saving over an existing month replaces it. */
   saveRecord: (input: SalaryInput, editId?: string) => Promise<SalaryRecord>;
+  /** +1 / −1 pair or video on the current month (creates the month if needed). */
+  bumpCurrentMonth: (kind: 'pairs' | 'videos', delta: number) => Promise<SalaryRecord>;
   deleteRecord: (id: string) => Promise<SalaryRecord | undefined>;
   restoreRecord: (record: SalaryRecord) => Promise<void>;
   updateSettings: (patch: Partial<SalarySettings>) => Promise<void>;
@@ -69,8 +72,18 @@ export function SalaryProvider({ children }: { children: ReactNode }) {
     writeDraft(d);
   }, []);
 
+  // Writes run one after another and update `ref` immediately, so rapid taps (+1 +1 +1)
+  // each see the previous result instead of a stale render.
+  const queue = useRef<Promise<unknown>>(Promise.resolve());
+  const serial = useCallback(<T,>(task: () => Promise<T>): Promise<T> => {
+    const run = queue.current.then(task, task);
+    queue.current = run.catch(() => undefined);
+    return run;
+  }, []);
+
   const commitRecords = useCallback(async (records: SalaryRecord[]) => {
     const sorted = await salaryStorage.saveRecords(records);
+    ref.current = { ...ref.current, records: sorted };
     setData((d) => ({ ...d, records: sorted }));
   }, []);
 
@@ -85,6 +98,34 @@ export function SalaryProvider({ children }: { children: ReactNode }) {
       return record;
     },
     [commitRecords],
+  );
+
+  const bumpCurrentMonth = useCallback(
+    (kind: 'pairs' | 'videos', delta: number) =>
+      serial(async () => {
+        const { records, settings } = ref.current;
+        const period = currentPeriod();
+        const existing = records.find((r) => r.period === period);
+        const base: SalaryInput = existing ?? {
+          period,
+          pairItems: [{ count: 0, rate: settings.pairRate }],
+          videoItems: [{ count: 0, rate: settings.videoRate }],
+          advance: 0,
+          additional: 0,
+          received: 0,
+          cashReceived: 0,
+          advanceMode: settings.advanceMode,
+        };
+        const key = kind === 'pairs' ? 'pairItems' : 'videoItems';
+        const lines = base[key].map((l) => ({ ...l }));
+        // +1 goes to the latest rate; −1 comes off the latest line that still has something.
+        const idx = delta > 0 ? lines.length - 1 : lines.map((l) => l.count > 0).lastIndexOf(true);
+        if (idx >= 0) lines[idx].count = Math.max(0, lines[idx].count + delta);
+        const record = buildRecord({ ...base, [key]: lines }, existing);
+        await commitRecords([...records.filter((r) => r.id !== record.id), record]);
+        return record;
+      }),
+    [serial, commitRecords],
   );
 
   const deleteRecord = useCallback(
@@ -156,6 +197,7 @@ export function SalaryProvider({ children }: { children: ReactNode }) {
       getRecord: (id) => data.records.find((r) => r.id === id),
       findByPeriod: (period) => data.records.find((r) => r.period === period),
       saveRecord,
+      bumpCurrentMonth,
       deleteRecord,
       restoreRecord,
       updateSettings,
@@ -165,7 +207,7 @@ export function SalaryProvider({ children }: { children: ReactNode }) {
       importData,
       exportJson: () => JSON.stringify(buildExport(ref.current), null, 2),
     }),
-    [data, ready, draft, setDraft, saveRecord, deleteRecord, restoreRecord, updateSettings, updateProfile, clearDemo, clearAll, importData],
+    [data, ready, draft, setDraft, saveRecord, bumpCurrentMonth, deleteRecord, restoreRecord, updateSettings, updateProfile, clearDemo, clearAll, importData],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

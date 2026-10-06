@@ -9,6 +9,7 @@ import { Button } from '../components/ui/Button';
 import { SalaryCard } from '../components/salary/SalaryCard';
 import { MoneySummary } from '../components/salary/MoneySummary';
 import { CalculationBreakdown } from '../components/salary/CalculationBreakdown';
+import { NoteCard } from '../components/salary/NoteCard';
 import { useToast } from '../components/ui/Toast';
 
 export function ResultPage() {
@@ -49,6 +50,7 @@ export function ResultPage() {
         <div className="stack">
           <SalaryCard record={input} calc={calc} change={change} />
           <MoneySummary calc={calc} />
+          <NoteCard note={input.note} />
         </div>
         <div className="card">
           <CalculationBreakdown input={input} calc={calc} />

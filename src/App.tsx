@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { matchPath, useRouter } from './router/router';
 import { useSalary } from './hooks/useSalaryStore';
+import { useTheme } from './hooks/useTheme';
 import { AppLayout } from './layouts/AppLayout';
 import { HomePage } from './pages/HomePage';
 import { CalculatePage } from './pages/CalculatePage';
@@ -22,7 +23,8 @@ const TITLES: Record<string, string> = {
 
 export function App() {
   const { path, query } = useRouter();
-  const { ready } = useSalary();
+  const { ready, settings } = useSalary();
+  useTheme(settings.theme);
 
   useEffect(() => {
     document.title = `${TITLES[path] ?? (path.startsWith('/history/') ? 'Деталі' : 'Зарплата')} · Зарплата`;

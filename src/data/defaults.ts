@@ -5,6 +5,7 @@ export const DEFAULT_SETTINGS: SalarySettings = {
   videoRate: 45,
   advanceMode: 'part',
   defaultAdvance: 0,
+  theme: 'light',
 };
 
 export const DEFAULT_PROFILE: SalaryProfile = {

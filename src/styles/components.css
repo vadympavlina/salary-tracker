@@ -172,6 +172,10 @@
 .status--partial,
 .status--pending { background: var(--orange-soft); color: var(--orange); }
 .status--on-dark { background: rgba(255, 255, 255, 0.95); }
+/* The hero is purple in both themes, so its pill keeps the light-theme ink. */
+.status--on-dark.status--paid { color: #138a47; }
+.status--on-dark.status--partial,
+.status--on-dark.status--pending { color: #c2610a; }
 
 /* ================= Money summary ================= */
 .money { padding: 16px 16px 14px; }
@@ -273,7 +277,7 @@
   grid-template-columns: repeat(var(--count), minmax(0, 1fr));
   padding: 3px;
   border-radius: 14px;
-  background: #ebebf2;
+  background: var(--segmented-bg);
 }
 .segmented__thumb {
   position: absolute;
@@ -282,7 +286,7 @@
   left: 3px;
   width: calc((100% - 6px) / var(--count));
   border-radius: 11px;
-  background: var(--surface);
+  background: var(--segmented-thumb);
   box-shadow: 0 1px 3px rgba(21, 21, 43, 0.12), 0 0 0 0.5px rgba(21, 21, 43, 0.04);
   transform: translateX(calc(100% * var(--index)));
   transition: transform 0.32s var(--spring);
@@ -367,7 +371,7 @@
   caret-color: var(--accent);
 }
 .field__input:focus-visible { outline: none; }
-.field__input::placeholder { color: #c4c4d4; }
+.field__input::placeholder { color: var(--placeholder); }
 .field__input--text { font-size: 18px; font-weight: 600; }
 .field__suffix { font-size: 19px; font-weight: 650; color: var(--text-3); }
 .field__hint, .field__error {
@@ -389,7 +393,7 @@
   transition: transform 0.12s var(--ease), background-color 0.15s;
 }
 .stepper__btn:active:not(:disabled) { transform: scale(0.9); background: var(--accent-soft-2); }
-.stepper__btn:disabled { background: var(--surface-2); color: #c4c4d4; cursor: default; }
+.stepper__btn:disabled { background: var(--surface-2); color: var(--placeholder); cursor: default; }
 
 /* Month picker */
 .month-picker { display: flex; align-items: center; justify-content: space-between; padding: 8px; }
@@ -420,6 +424,63 @@
 .live-total b { font-size: 22px; font-weight: 760; letter-spacing: -0.025em; white-space: nowrap; }
 .live-total small { font-size: 12px; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+/* Month counter (home) */
+.counter { display: flex; flex-direction: column; gap: 4px; padding: 16px; }
+.counter__head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+.counter__sub { font-size: 13px; color: var(--text-3); margin-top: 2px; }
+.counter__row { display: flex; align-items: center; gap: 10px; min-height: 60px; }
+.counter__row + .counter__row { border-top: 1px solid var(--border); }
+.counter__icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; border-radius: 12px;
+  background: var(--accent-soft); color: var(--accent);
+}
+.counter__label { flex: 1; font-size: 15.5px; font-weight: 600; }
+.counter__value { min-width: 52px; text-align: right; font-size: 24px; font-weight: 760; letter-spacing: -0.02em; margin-right: 6px; }
+.counter__btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 48px; height: 48px; border: 0; border-radius: 16px;
+  background: var(--surface-2); color: var(--text-2);
+  box-shadow: inset 0 0 0 1px var(--border);
+  flex-shrink: 0;
+  touch-action: manipulation;
+  transition: transform 0.12s var(--ease), background-color 0.15s;
+}
+.counter__btn--plus { width: 56px; background: var(--accent); color: #fff; box-shadow: var(--shadow-accent); }
+.counter__btn:active:not(:disabled) { transform: scale(0.9); }
+.counter__btn:disabled { opacity: 0.4; }
+.counter__total { margin-top: 6px; font-size: 13.5px; color: var(--text-2); }
+.counter__total b { color: var(--text); }
+.pop { animation: pop-num 0.28s var(--spring); }
+@keyframes pop-num { 0% { transform: scale(0.85); } 100% { transform: none; } }
+
+/* Several rates in one month */
+.rate-line { display: flex; flex-direction: column; gap: 10px; }
+.rate-line:not(.rate-line--single) { padding: 10px; border-radius: var(--r-lg); background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--border); }
+.rate-line__head { display: flex; align-items: center; justify-content: space-between; min-height: 32px; padding: 0 4px; font-size: 13px; font-weight: 700; color: var(--text-2); }
+.rate-line__remove {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; margin: -6px -6px -6px 0;
+  border: 0; border-radius: 12px; background: none; color: var(--text-3);
+}
+.rate-line__remove:hover { background: var(--red-soft); color: var(--red); }
+.add-line {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  align-self: flex-start;
+  min-height: 44px; padding: 0 14px;
+  border: 1px dashed var(--border-strong); border-radius: 14px;
+  background: transparent; color: var(--accent);
+  font-size: 14px; font-weight: 650;
+  transition: background-color 0.15s;
+}
+.add-line:hover { background: var(--accent-soft); }
+.field__input--area { resize: none; min-height: 52px; padding-top: 4px; font-size: 16px; font-weight: 500; line-height: 1.4; field-sizing: content; }
+
+/* Note */
+.note { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; }
+.note svg { flex-shrink: 0; color: var(--accent); margin-top: 2px; }
+.note p { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text); font-size: 15px; }
+
 /* "На руки" callout inside the form */
 .hand-callout {
   display: flex; flex-direction: column; gap: 2px;
@@ -441,8 +502,8 @@
   font-size: 14px;
 }
 .notice svg { flex-shrink: 0; margin-top: 1px; }
-.notice--warn { background: var(--orange-soft); color: #8a4a0c; }
-.notice--success { background: var(--green-soft); color: #0f5f33; margin-bottom: 14px; align-items: center; }
+.notice--warn { background: var(--orange-soft); color: var(--orange-text); }
+.notice--success { background: var(--green-soft); color: var(--green-text); margin-bottom: 14px; align-items: center; }
 .notice--success b { display: block; font-size: 15px; }
 .notice--success small { font-size: 13px; opacity: 0.8; }
 .success-pop { animation: pop 0.5s var(--spring) both; }
@@ -520,7 +581,7 @@
   animation-delay: var(--delay);
   transition: background-color 0.2s;
 }
-.bar:hover .bar__fill { background: #c9c1fb; }
+.bar:hover .bar__fill { background: var(--accent-soft-3); }
 .bar--active .bar__fill { background: var(--accent); }
 @keyframes grow-y { from { transform: scaleY(0); } }
 .bar__label { margin-top: 6px; font-size: 11.5px; color: var(--text-3); font-weight: 550; }
@@ -695,4 +756,6 @@ html.modal-open { overflow: hidden; }
   .stepper__btn { width: 44px; height: 44px; }
   .action-bar--calc .btn { min-width: 0; padding: 0 16px; }
   .segmented__badge { display: none; }
+  .counter__icon { display: none; }
+  .counter__value { min-width: 40px; }
 }

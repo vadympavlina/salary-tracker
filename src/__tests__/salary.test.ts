@@ -11,10 +11,8 @@ import { DEMO_INPUTS } from '../data/demoRecords';
 
 const base: SalaryInput = {
   period: '2026-10',
-  pairs: 12,
-  pairRate: 350,
-  videos: 248,
-  videoRate: 45,
+  pairItems: [{ count: 12, rate: 350 }],
+  videoItems: [{ count: 248, rate: 45 }],
   advance: 5000,
   additional: 1200,
   received: 10000,
@@ -60,8 +58,28 @@ describe('calculateSalary', () => {
   });
 
   it('ignores invalid values', () => {
-    const c = calculateSalary({ ...base, pairs: -3, videos: NaN, advance: 0, received: 0, additional: 0 });
+    const c = calculateSalary({ ...base, pairItems: [{ count: -3, rate: 350 }], videoItems: [{ count: NaN, rate: 45 }], advance: 0, received: 0, additional: 0 });
     expect(c.grossIncome).toBe(0);
+  });
+
+  it('several rates in one month', () => {
+    const c = calculateSalary({
+      ...base,
+      pairItems: [{ count: 8, rate: 350 }, { count: 4, rate: 400 }],
+      videoItems: [{ count: 200, rate: 45 }, { count: 48, rate: 50 }],
+    });
+    expect(c.pairs).toBe(12);
+    expect(c.videos).toBe(248);
+    expect(c.pairIncome).toBe(2800 + 1600);
+    expect(c.videoIncome).toBe(9000 + 2400);
+  });
+
+  it('migrates single pairs/pairRate records saved before multi-rate support', () => {
+    const old = normalizeRecord({ period: '2026-09', pairs: 11, pairRate: 350, videos: 484, videoRate: 45, note: 'премія' });
+    expect(old!.pairItems).toEqual([{ count: 11, rate: 350 }]);
+    expect(old!.videoItems).toEqual([{ count: 484, rate: 45 }]);
+    expect(old!.note).toBe('премія');
+    expect(calculateSalary(old!).grossIncome).toBe(3850 + 21780);
   });
 
   it('ignores a legacy taxRate field from old saves', () => {

@@ -16,7 +16,7 @@ interface FieldShellProps {
 function FieldShell({ id, label, icon, hint, error, children, trailing }: FieldShellProps) {
   return (
     <div className={`field${error ? ' field--error' : ''}`}>
-      <div className="field__box" onClick={(e) => (e.currentTarget.querySelector('input') as HTMLInputElement | null)?.focus()}>
+      <div className="field__box" onClick={(e) => (e.currentTarget.querySelector('input, textarea') as HTMLElement | null)?.focus()}>
         {icon && (
           <span className="field__icon" aria-hidden="true">
             {icon}
@@ -246,6 +246,33 @@ export function TextInput({ label, value, onChange, autoComplete, maxLength = 60
   return (
     <FieldShell id={id} label={label}>
       <input id={id} className="field__input field__input--text" type="text" value={value} maxLength={maxLength} autoComplete={autoComplete} onChange={(e) => onChange(e.target.value)} />
+    </FieldShell>
+  );
+}
+
+interface TextAreaProps {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  maxLength?: number;
+  icon?: ReactNode;
+}
+
+/** Multi-line text (notes). Grows with content. */
+export function TextArea({ label, value, onChange, placeholder, maxLength = 500, icon }: TextAreaProps) {
+  const id = useId();
+  return (
+    <FieldShell id={id} label={label} icon={icon} hint={value.length > maxLength * 0.8 ? `${value.length}/${maxLength}` : undefined}>
+      <textarea
+        id={id}
+        className="field__input field__input--area"
+        rows={2}
+        value={value}
+        maxLength={maxLength}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+      />
     </FieldShell>
   );
 }

@@ -1,4 +1,4 @@
-import type { ExportPayload, SalaryInput, SalaryProfile, SalaryRecord, SalarySettings } from '../../types/salary';
+import type { ExportPayload, RateLine, SalaryInput, SalaryProfile, SalaryRecord, SalarySettings } from '../../types/salary';
 import { DEFAULT_PROFILE, DEFAULT_SETTINGS } from '../../data/defaults';
 import { DEMO_INPUTS } from '../../data/demoRecords';
 import { calculateSalary } from '../calculations/salaryCalculator';
@@ -34,6 +34,18 @@ const num = (v: unknown, fallback = 0) => {
   return Number.isFinite(n) && n >= 0 ? n : fallback;
 };
 
+/** Rate lines from storage; records saved before multi-rate support had a single pairs/pairRate pair. */
+function lines(items: unknown, legacyCount: unknown, legacyRate: unknown): RateLine[] {
+  if (Array.isArray(items)) {
+    const out = items
+      .filter((l): l is Record<string, unknown> => !!l && typeof l === 'object')
+      .map((l) => ({ count: num(l.count), rate: num(l.rate) }))
+      .slice(0, 10);
+    if (out.length) return out;
+  }
+  return [{ count: num(legacyCount), rate: num(legacyRate) }];
+}
+
 const isPeriod = (v: unknown): v is string => typeof v === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(v);
 
 /** Builds a full record (with derived status) from inputs. */
@@ -57,10 +69,8 @@ export function normalizeRecord(raw: unknown): SalaryRecord | null {
   if (!isPeriod(r.period)) return null;
   const input: SalaryInput = {
     period: r.period,
-    pairs: num(r.pairs),
-    pairRate: num(r.pairRate),
-    videos: num(r.videos),
-    videoRate: num(r.videoRate),
+    pairItems: lines(r.pairItems, r.pairs, r.pairRate),
+    videoItems: lines(r.videoItems, r.videos, r.videoRate),
     advance: num(r.advance),
     additional: num(r.additional),
     received: num(r.received),
@@ -86,6 +96,7 @@ export function normalizeSettings(raw: unknown): SalarySettings {
     videoRate: num(s.videoRate, DEFAULT_SETTINGS.videoRate),
     advanceMode: s.advanceMode === 'extra' ? 'extra' : 'part',
     defaultAdvance: num(s.defaultAdvance, DEFAULT_SETTINGS.defaultAdvance),
+    theme: s.theme === 'dark' || s.theme === 'system' ? s.theme : 'light',
   };
 }
 

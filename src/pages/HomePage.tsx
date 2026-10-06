@@ -11,6 +11,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { SalaryCard } from '../components/salary/SalaryCard';
 import { MoneySummary } from '../components/salary/MoneySummary';
 import { StatCard } from '../components/dashboard/StatCard';
+import { MonthCounter } from '../components/dashboard/MonthCounter';
 import { HistoryItem } from '../components/history/HistoryItem';
 import { ChartCard } from '../components/analytics/ChartCard';
 import { BarChart } from '../components/analytics/BarChart';
@@ -40,6 +41,7 @@ export function HomePage() {
     return (
       <>
         {header}
+        <MonthCounter />
         <EmptyState
           icon={<WalletCards size={30} />}
           title="Поки що немає розрахунків"
@@ -64,11 +66,12 @@ export function HomePage() {
       <div className="dashboard">
         <div className="dashboard__main stack">
           <SalaryCard record={latest} calc={calc} change={change} to={`/history/${latest.id}`} />
+          <MonthCounter />
           <MoneySummary calc={calc} />
           <div className="stats-row">
-            <StatCard label="Пари" value={formatNumber(latest.pairs)} icon={<UsersRound size={18} />} />
-            <StatCard label="Відео" value={formatNumber(latest.videos)} icon={<CirclePlay size={18} />} />
-            <StatCard label="За відео" value={formatUAH(latest.videoRate)} icon={<Wallet size={18} />} />
+            <StatCard label="Пари" value={formatNumber(calc.pairs)} icon={<UsersRound size={18} />} />
+            <StatCard label="Відео" value={formatNumber(calc.videos)} icon={<CirclePlay size={18} />} />
+            <StatCard label="За відео" value={formatUAH(latest.videoItems[latest.videoItems.length - 1]?.rate ?? 0)} icon={<Wallet size={18} />} />
           </div>
         </div>
         <div className="dashboard__side stack">

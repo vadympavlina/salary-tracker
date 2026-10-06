@@ -1,9 +1,9 @@
 import { useRef, useState, type ReactNode } from 'react';
-import { Banknote, ChevronRight, Download, Eraser, HandCoins, Smartphone, Trash2, Upload, Wallet, Scale } from 'lucide-react';
+import { Banknote, ChevronRight, Download, Eraser, HandCoins, Moon, Smartphone, Sun, SunMoon, Trash2, Upload, Wallet, Scale } from 'lucide-react';
 import { useSalary } from '../hooks/useSalaryStore';
 import { isIOS, isStandalone, useInstallPrompt } from '../hooks/useInstallPrompt';
 import { ImportError, parseImport, type AppData } from '../services/storage/salaryStorage';
-import type { AdvanceMode } from '../types/salary';
+import type { AdvanceMode, ThemePreference } from '../types/salary';
 import { formatUAH, plural } from '../utils/format';
 import { fromNumber, toNumber } from '../utils/input';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -36,7 +36,10 @@ function Row({ icon, label, value, onClick, danger }: RowProps) {
   );
 }
 
-type Editor = null | 'profile' | 'pairRate' | 'videoRate' | 'defaultAdvance' | 'advanceMode' | 'clearAll' | 'clearDemo' | 'install';
+type Editor = null | 'profile' | 'pairRate' | 'videoRate' | 'defaultAdvance' | 'advanceMode' | 'theme' | 'clearAll' | 'clearDemo' | 'install';
+
+const THEME_LABEL: Record<ThemePreference, string> = { light: 'Світла', dark: 'Темна', system: 'Як у системі' };
+const THEME_ICON: Record<ThemePreference, ReactNode> = { light: <Sun size={19} />, dark: <Moon size={19} />, system: <SunMoon size={19} /> };
 
 const RATE_META = {
   pairRate: { title: 'Ставка за пару', label: 'Ставка за пару', icon: <Banknote size={20} /> },
@@ -145,6 +148,13 @@ export function SettingsPage() {
         </section>
 
         <section className="settings__section">
+          <h2 className="settings__title">Вигляд</h2>
+          <ul className="list-card">
+            <Row icon={THEME_ICON[settings.theme]} label="Тема" value={THEME_LABEL[settings.theme]} onClick={() => open('theme')} />
+          </ul>
+        </section>
+
+        <section className="settings__section">
           <h2 className="settings__title">Дані</h2>
           <ul className="list-card">
             <Row icon={<Download size={19} />} label="Експорт даних" value="JSON" onClick={exportData} />
@@ -202,6 +212,21 @@ export function SettingsPage() {
         }
       >
         {isRateEditor && <CurrencyInput label={RATE_META[editor].label} value={value} onChange={setValue} icon={RATE_META[editor].icon} max={10_000_000} />}
+      </Modal>
+
+      {/* Theme — applied instantly so the choice can be previewed */}
+      <Modal open={editor === 'theme'} onClose={close} title="Тема" footer={<Button block onClick={close}>Готово</Button>}>
+        <Segmented
+          label="Тема оформлення"
+          value={settings.theme}
+          onChange={(theme) => store.updateSettings({ theme })}
+          options={[
+            { value: 'light', label: 'Світла' },
+            { value: 'dark', label: 'Темна' },
+            { value: 'system', label: 'Системна' },
+          ]}
+        />
+        <p className="explain">«Системна» перемикається разом із темою телефона чи комп’ютера.</p>
       </Modal>
 
       {/* Advance mode */}
