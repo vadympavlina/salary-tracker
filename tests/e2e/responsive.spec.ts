@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { expectTappable, field, settle, trackErrors } from './helpers';
+import { appReady, expectTappable, field, scrollToBottom, settle, trackErrors } from './helpers';
 
 const PAGES = [
   { name: 'Головна', path: './', heading: /Привіт/ },
@@ -12,6 +12,7 @@ const PAGES = [
 
 async function firstRecordId(page: Page) {
   await page.goto('./');
+  await appReady(page);
   return page.evaluate(() => JSON.parse(localStorage.getItem('salary_records') || '[]')[0]?.id as string);
 }
 
@@ -110,14 +111,19 @@ test('primary actions stay reachable above the bars', async ({ page }) => {
 
 test('the end of long lists is not hidden behind the tab bar', async ({ page }) => {
   await page.goto('history');
-  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-  await page.waitForTimeout(200);
+  await expect(page.locator('.history-item')).toHaveCount(6);
+  await scrollToBottom(page);
   await expectTappable(page.locator('.history-item').last());
 
   await page.goto('settings');
-  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-  await page.waitForTimeout(200);
-  await expectTappable(page.getByRole('button', { name: /Видалити всі дані/ }));
+  await appReady(page);
+  // The last thing on the page is reachable above the tab bar…
+  await scrollToBottom(page);
+  await expectTappable(page.locator('.settings__footer'));
+  // …and every row can be scrolled into a tappable spot.
+  const danger = page.getByRole('button', { name: /Видалити всі дані/ });
+  await danger.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+  await expectTappable(danger);
 });
 
 test('dialogs fit the viewport and close with Escape', async ({ page }) => {
@@ -139,6 +145,7 @@ test('dialogs fit the viewport and close with Escape', async ({ page }) => {
 test('keyboard: skip link and focus order', async ({ page }, testInfo) => {
   test.skip(!!testInfo.project.use.isMobile, 'hardware keyboard scenario');
   await page.goto('./');
+  await appReady(page);
   await page.keyboard.press('Tab');
   await expect(page.getByRole('link', { name: 'Перейти до вмісту' })).toBeFocused();
   await page.keyboard.press('Enter');

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { settle } from './helpers';
+import { appReady, settle } from './helpers';
 
 // Accessibility audit (WCAG 2.1 A/AA: contrast, labels, roles, names…) on one phone and one desktop.
 const AUDITED = ['iPhone 15 · 393', 'Laptop · 1280'];
@@ -9,6 +9,7 @@ for (const theme of ['light', 'dark'] as const) {
   test(`accessibility (${theme} theme): every page passes axe`, async ({ page }, testInfo) => {
     test.skip(!AUDITED.includes(testInfo.project.name), 'audited on a representative phone + desktop');
     await page.goto('./');
+    await appReady(page);
     await page.evaluate((t) => {
       const s = JSON.parse(localStorage.getItem('salary_settings') || '{}');
       localStorage.setItem('salary_settings', JSON.stringify({ ...s, theme: t }));

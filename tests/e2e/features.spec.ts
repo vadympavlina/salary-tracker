@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { field, settle, trackErrors, uah } from './helpers';
+import { appReady, field, settle, trackErrors, uah } from './helpers';
 
 test('month counter: +1 / −1 on the home screen, survives reload', async ({ page }) => {
   const assertNoErrors = trackErrors(page);
@@ -31,6 +31,7 @@ test('month counter: +1 / −1 on the home screen, survives reload', async ({ pa
 
 test('month counter starts the month when there is no record yet', async ({ page }) => {
   await page.goto('./');
+  await appReady(page); // let first-launch demo seeding finish before wiping it
   await page.evaluate(() => {
     localStorage.setItem('salary_records', '[]');
   });
@@ -104,6 +105,7 @@ test('theme: light by default, dark and system from settings, no flash on reload
 
 test('dark theme: every page renders cleanly', async ({ page }, testInfo) => {
   await page.goto('./');
+  await appReady(page);
   await page.evaluate(() => {
     const s = JSON.parse(localStorage.getItem('salary_settings') || '{}');
     localStorage.setItem('salary_settings', JSON.stringify({ ...s, theme: 'dark' }));

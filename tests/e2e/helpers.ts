@@ -20,15 +20,40 @@ export function trackErrors(page: Page) {
 /** The element is inside the viewport and is what a tap at its center would hit (not hidden under a bar). */
 export async function expectTappable(locator: Locator) {
   await expect(locator).toBeVisible();
-  const hit = await locator.evaluate((el) => {
-    const r = el.getBoundingClientRect();
-    const x = r.left + r.width / 2;
-    const y = r.top + r.height / 2;
-    if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) return 'outside viewport';
-    const top = document.elementFromPoint(x, y);
-    return top && (el === top || el.contains(top)) ? 'ok' : `covered by ${top?.className || top?.tagName}`;
-  });
-  expect(hit).toBe('ok');
+  // Polls: scrolling, page transitions and sticky bars settle at different speeds per engine.
+  await expect
+    .poll(
+      () =>
+        locator.evaluate((el) => {
+          const r = el.getBoundingClientRect();
+          const x = r.left + r.width / 2;
+          const y = r.top + r.height / 2;
+          if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) return 'outside viewport';
+          const top = document.elementFromPoint(x, y);
+          return top && (el === top || el.contains(top)) ? 'ok' : `covered by ${top?.className || top?.tagName}`;
+        }),
+      { timeout: 4000 },
+    )
+    .toBe('ok');
+}
+
+/** Scrolls to the very bottom and waits until the scroll position has settled. */
+export async function scrollToBottom(page: Page) {
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          window.scrollTo(0, document.documentElement.scrollHeight);
+          return Math.abs(window.scrollY + window.innerHeight - document.documentElement.scrollHeight) <= 2;
+        }),
+      { timeout: 4000 },
+    )
+    .toBe(true);
+}
+
+/** Waits until the app has finished its first load (including seeding demo data). */
+export async function appReady(page: Page) {
+  await expect(page.locator('main h1').first()).toBeVisible();
 }
 
 /** Ends running number animations so screenshots/asserts see final values. */
