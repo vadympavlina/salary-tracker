@@ -18,11 +18,11 @@ for (const theme of ['light', 'dark'] as const) {
 
     const pages = [
       ['Головна', './'],
-      ['Розрахунок', 'calculate?new=1'],
-      ['Історія', 'history'],
-      ['Деталі', `history/${id}`],
-      ['Аналітика', 'analytics'],
-      ['Налаштування', 'settings'],
+      ['Розрахунок', '#/calculate?new=1'],
+      ['Історія', '#/history'],
+      ['Деталі', `#/history/${id}`],
+      ['Аналітика', '#/analytics'],
+      ['Налаштування', '#/settings'],
     ];
     const problems: string[] = [];
     for (const [name, path] of pages) {
@@ -34,13 +34,13 @@ for (const theme of ['light', 'dark'] as const) {
       }
     }
     // Result page + an open dialog
-    await page.goto('calculate?new=1');
+    await page.goto('#/calculate?new=1');
     await page.getByRole('button', { name: 'Розрахувати' }).click();
     await settle(page);
     for (const v of (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations) {
       problems.push(`Результат: [${v.id}] ${v.help} → ${v.nodes.slice(0, 3).map((n) => n.target.join(' ')).join(' | ')}`);
     }
-    await page.goto('settings');
+    await page.goto('#/settings');
     await page.getByRole('button', { name: /Режим авансу/ }).click();
     await page.waitForTimeout(450);
     for (const v of (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations) {

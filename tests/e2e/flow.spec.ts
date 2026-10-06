@@ -41,7 +41,7 @@ test('full flow: create → calculate → save → history → edit → delete �
   // 5. Deep-link refresh + history filter
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Деталі розрахунку' })).toBeVisible();
-  await page.goto('history');
+  await page.goto('#/history');
   await expect(page.getByRole('link', { name: /Листопад 2026/ })).toBeVisible();
   await page.getByRole('radio', { name: /В очікуванні/ }).click();
   await expect(page.locator('.history-item')).toHaveCount(2);
@@ -92,17 +92,17 @@ test('full flow: create → calculate → save → history → edit → delete �
   expect(exported.settings.pairRate).toBe(400);
   await page.getByRole('button', { name: /Видалити всі дані/ }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Видалити все' }).click();
-  await page.goto('history');
+  await page.goto('#/history');
   await expect(page.getByText('Поки що немає розрахунків')).toBeVisible();
-  await page.goto('settings');
+  await page.goto('#/settings');
   await page.locator('input[type=file]').setInputFiles({ name: 'backup.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(exported)) });
   await page.getByRole('dialog').getByRole('button', { name: 'Замінити' }).click();
   await expect(page.getByRole('button', { name: /Ставка за пару.*400/ })).toBeVisible();
-  await page.goto('history');
+  await page.goto('#/history');
   await expect(page.locator('.history-item')).toHaveCount(6);
 
   // 11. A month without data starts from the new default rate…
-  await page.goto('calculate?new=1');
+  await page.goto('#/calculate?new=1');
   await page.getByRole('button', { name: 'Наступний місяць' }).click();
   await expect(field(page, 'Ставка за пару')).toHaveValue('400');
   // …while a month that already has data opens filled in (never wiped by "new").

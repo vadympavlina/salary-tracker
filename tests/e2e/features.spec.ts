@@ -41,13 +41,13 @@ test('month counter starts the month when there is no record yet', async ({ page
   await page.getByRole('button', { name: 'Пари: плюс один' }).click();
   await expect(page.locator('.counter .counter__value').first()).toContainText('2');
   await expect(page.locator('.hero__amount')).toBeVisible(); // the month now exists
-  await page.goto('history');
+  await page.goto('#/history');
   await expect(page.locator('.history-item')).toHaveCount(1);
 });
 
 test('several rates in one month + note', async ({ page }) => {
   const assertNoErrors = trackErrors(page);
-  await page.goto('calculate?new=1');
+  await page.goto('#/calculate?new=1');
   await page.getByRole('button', { name: 'Наступний місяць' }).click();
   await field(page, 'Кількість пар').fill('8');
   await page.getByRole('button', { name: 'Інша ставка: пари' }).click();
@@ -81,7 +81,7 @@ test('several rates in one month + note', async ({ page }) => {
 test('theme: light by default, dark and system from settings, no flash on reload', async ({ page }) => {
   await page.goto('./');
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-  await page.goto('settings');
+  await page.goto('#/settings');
   await page.getByRole('button', { name: /^Тема/ }).click();
   await page.getByRole('dialog').getByRole('radio', { name: 'Темна', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
@@ -111,7 +111,7 @@ test('dark theme: every page renders cleanly', async ({ page }, testInfo) => {
     localStorage.setItem('salary_settings', JSON.stringify({ ...s, theme: 'dark' }));
   });
   const id = await page.evaluate(() => JSON.parse(localStorage.getItem('salary_records') || '[]')[0].id as string);
-  for (const [name, path] of [['Головна', './'], ['Розрахунок', 'calculate?new=1'], ['Історія', 'history'], ['Деталі', `history/${id}`], ['Аналітика', 'analytics'], ['Налаштування', 'settings']]) {
+  for (const [name, path] of [['Головна', './'], ['Розрахунок', '#/calculate?new=1'], ['Історія', '#/history'], ['Деталі', `#/history/${id}`], ['Аналітика', '#/analytics'], ['Налаштування', '#/settings']]) {
     await page.goto(path);
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     await settle(page);

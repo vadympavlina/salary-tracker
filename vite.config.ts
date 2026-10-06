@@ -27,7 +27,6 @@ function publicHash(): string {
  * Production-only helpers for GitHub Pages:
  * - 404.html is a copy of index.html, so deep links / refreshes boot the SPA.
  * - sw.js is generated with the hashed asset list for offline precaching.
- * - icon / manifest / splash links get ?v=<hash of public/> so phones never reuse a stale icon.
  */
 function pagesAndServiceWorker(): Plugin {
   const assetsVersion = publicHash();
@@ -35,9 +34,6 @@ function pagesAndServiceWorker(): Plugin {
     name: 'pages-and-sw',
     apply: 'build',
     enforce: 'post',
-    transformIndexHtml(html) {
-      return html.replace(/(href="[^"?]*(?:\/icons\/|\/splash\/|favicon\.(?:ico|svg)|manifest\.webmanifest)[^"?]*)"/g, `$1?v=${assetsVersion}"`);
-    },
     generateBundle(_options, bundle) {
       const files = Object.keys(bundle).filter((f) => !f.endsWith('.map') && f !== 'index.html');
       const precache = ['./', ...files, 'manifest.webmanifest', 'favicon.svg', 'favicon.ico', 'icons/favicon-32.png', 'icons/icon-192.png', 'icons/apple-touch-icon.png'];

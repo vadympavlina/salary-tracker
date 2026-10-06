@@ -1,11 +1,21 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type AnchorHTMLAttributes, type MouseEvent, type ReactNode } from 'react';
 
 /**
- * Tiny History-API router (~1 KB) — enough for this app and much lighter than a
- * routing library. Works under the GitHub Pages sub-path via Vite's BASE_URL;
- * deep links are served by 404.html (a copy of index.html, see vite.config.ts).
+ * Tiny hash router (~1 KB): every screen lives under the same real file
+ * (/salary-tracker/#/history …), so GitHub Pages always answers 200 OK.
+ * That matters on iPhone: "Add to Home Screen" re-loads the current URL to find
+ * the icon, and a path URL answered by 404.html made iOS drop the icon.
  */
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+// Old path-style links (/salary-tracker/settings) still work: turn them into #/settings.
+if (typeof window !== 'undefined') {
+  const rest = window.location.pathname.startsWith(BASE) ? window.location.pathname.slice(BASE.length) : '';
+  const legacy = rest.replace(/\/+$/, '').replace(/^\/index\.html$/, '');
+  if (legacy && legacy !== '/' && !window.location.hash) {
+    window.history.replaceState(window.history.state, '', `${BASE}/#${legacy}${window.location.search}`);
+  }
+}
 
 interface Location {
   path: string;
@@ -27,14 +37,15 @@ interface RouterValue extends Location {
 const RouterContext = createContext<RouterValue | null>(null);
 
 function readLocation(): Location {
-  let path = window.location.pathname;
-  if (BASE && path.startsWith(BASE)) path = path.slice(BASE.length);
-  path = path.replace(/\/+$/, '') || '/';
+  const hash = window.location.hash.replace(/^#/, '') || '/';
+  const [rawPath, search = ''] = hash.split('?');
+  const path = rawPath.replace(/\/+$/, '') || '/';
   const hs = window.history.state as { usr?: unknown } | null;
-  return { path, query: new URLSearchParams(window.location.search), state: hs?.usr };
+  return { path, query: new URLSearchParams(search), state: hs?.usr };
 }
 
-export const href = (to: string) => `${BASE}${to === '/' ? '/' : to}`;
+/** In-app URL: home is the plain app URL, every other screen is #/path. */
+export const href = (to: string) => (to === '/' ? `${BASE}/` : `${BASE}/#${to}`);
 
 export function RouterProvider({ children }: { children: ReactNode }) {
   const [loc, setLoc] = useState<Location>(readLocation);
@@ -42,8 +53,12 @@ export function RouterProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const onPop = () => setLoc(readLocation());
     window.addEventListener('popstate', onPop);
+    window.addEventListener('hashchange', onPop); // typed / pasted #/… URLs
     if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
-    return () => window.removeEventListener('popstate', onPop);
+    return () => {
+      window.removeEventListener('popstate', onPop);
+      window.removeEventListener('hashchange', onPop);
+    };
   }, []);
 
   const navigate = useCallback((to: string, opts: NavigateOptions = {}) => {

@@ -3,11 +3,11 @@ import { appReady, expectTappable, field, scrollToBottom, settle, trackErrors } 
 
 const PAGES = [
   { name: 'Головна', path: './', heading: /Привіт/ },
-  { name: 'Розрахунок', path: 'calculate?new=1', heading: 'Розрахунок' },
-  { name: 'Історія', path: 'history', heading: 'Історія' },
-  { name: 'Деталі', path: 'history/:first', heading: 'Деталі розрахунку', pushed: true },
-  { name: 'Аналітика', path: 'analytics', heading: 'Аналітика' },
-  { name: 'Налаштування', path: 'settings', heading: 'Налаштування' },
+  { name: 'Розрахунок', path: '#/calculate?new=1', heading: 'Розрахунок' },
+  { name: 'Історія', path: '#/history', heading: 'Історія' },
+  { name: 'Деталі', path: '#/history/:first', heading: 'Деталі розрахунку', pushed: true },
+  { name: 'Аналітика', path: '#/analytics', heading: 'Аналітика' },
+  { name: 'Налаштування', path: '#/settings', heading: 'Налаштування' },
 ];
 
 async function firstRecordId(page: Page) {
@@ -90,7 +90,7 @@ for (const p of PAGES) {
 
 test('primary actions stay reachable above the bars', async ({ page }) => {
   // Calculate: the sticky "Розрахувати" is on screen without scrolling.
-  await page.goto('calculate?new=1');
+  await page.goto('#/calculate?new=1');
   await expectTappable(page.getByRole('button', { name: 'Розрахувати' }));
   // ...and still after scrolling to the bottom of the form.
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
@@ -110,12 +110,12 @@ test('primary actions stay reachable above the bars', async ({ page }) => {
 });
 
 test('the end of long lists is not hidden behind the tab bar', async ({ page }) => {
-  await page.goto('history');
+  await page.goto('#/history');
   await expect(page.locator('.history-item')).toHaveCount(6);
   await scrollToBottom(page);
   await expectTappable(page.locator('.history-item').last());
 
-  await page.goto('settings');
+  await page.goto('#/settings');
   await appReady(page);
   // The last thing on the page is reachable above the tab bar…
   await scrollToBottom(page);
@@ -127,7 +127,7 @@ test('the end of long lists is not hidden behind the tab bar', async ({ page }) 
 });
 
 test('dialogs fit the viewport and close with Escape', async ({ page }) => {
-  await page.goto('settings');
+  await page.goto('#/settings');
   await page.getByRole('button', { name: /Ставка за пару/ }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();
@@ -150,4 +150,22 @@ test('keyboard: skip link and focus order', async ({ page }, testInfo) => {
   await expect(page.getByRole('link', { name: 'Перейти до вмісту' })).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(page.locator('#main')).toBeFocused();
+});
+
+test('every screen is served with HTTP 200 (iOS needs it to read the home-screen icon)', async ({ page, baseURL }) => {
+  // "Add to Home Screen" re-requests the current URL: it must be a real page, never a 404 fallback.
+  for (const path of ['./', '#/calculate', '#/history', '#/analytics', '#/settings']) {
+    await page.goto(path);
+    await appReady(page);
+    const res = await page.request.get(page.url());
+    expect(res.status(), `${page.url()}`).toBe(200);
+    await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute('href', /icons\/apple-touch-icon\.png$/);
+    const icon = await page.request.get(new URL((await page.locator('link[rel="apple-touch-icon"]').getAttribute('href'))!, page.url()).href);
+    expect(icon.status()).toBe(200);
+    expect(icon.headers()['content-type']).toContain('image/png');
+  }
+  // Old path-style links are rewritten to the hash form.
+  await page.goto(`${baseURL}settings`);
+  await expect(page.getByRole('heading', { name: 'Налаштування', level: 1 })).toBeVisible();
+  expect(new URL(page.url()).hash).toBe('#/settings');
 });
