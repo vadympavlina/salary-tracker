@@ -19,6 +19,10 @@ npx vite preview --port 4173 &  npm run e2e   # повний сценарій у
 
 Base path береться з назви репозиторію (`BASE_PATH`). Deep links і refresh працюють завдяки `404.html` (копія `index.html`, генерується під час збірки), офлайн — завдяки service worker (`sw/sw.template.js` → `dist/sw.js`).
 
+## Іконки
+
+Усі іконки генеруються з одного джерела `icons-src/glyph.mjs`: `npm run icons` → `favicon.ico` (16/32/48), `favicon.svg`, PNG 16/32, apple-touch-icon 180, PWA 192/512 + maskable, плитка Windows, Safari pinned tab.
+
 ## Логіка розрахунку
 
 Ставки вводяться вже без податку; податкова ставка лише довідкова.
