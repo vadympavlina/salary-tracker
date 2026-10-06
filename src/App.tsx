@@ -2,6 +2,8 @@ import { useEffect } from 'react';
 import { matchPath, useRouter } from './router/router';
 import { useSalary } from './hooks/useSalaryStore';
 import { useTheme } from './hooks/useTheme';
+import { useCloud } from './hooks/useCloud';
+import { LoginPage } from './pages/LoginPage';
 import { useToast } from './components/ui/Toast';
 import { AppLayout } from './layouts/AppLayout';
 import { HomePage } from './pages/HomePage';
@@ -25,6 +27,7 @@ const TITLES: Record<string, string> = {
 export function App() {
   const { path, query } = useRouter();
   const { ready, settings } = useSalary();
+  const cloud = useCloud();
   useTheme(settings.theme);
   const toast = useToast();
 
@@ -40,6 +43,10 @@ export function App() {
   }, [path]);
 
   if (!ready) return null;
+  // Not signed in (and not using the app locally): sign-in screen. While Firebase is still
+  // checking a never-signed-in device, show nothing for that split second.
+  if (!cloud.localOnly && cloud.user === null) return <LoginPage />;
+  if (!cloud.localOnly && cloud.user === undefined) return <div className="boot" aria-busy="true" />;
 
   let page;
   let pushed = false;

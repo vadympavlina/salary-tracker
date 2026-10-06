@@ -1,12 +1,27 @@
 import { test, expect } from '@playwright/test';
-import { appReady, field, nb, trackErrors, uah } from './helpers';
+import { appReady, field, nb, offlineCloud, trackErrors, uah } from './helpers';
 
-// A brand-new install: no sample data at all.
+// A brand-new install: no sample data at all (and no real network to Firebase).
 test.use({ storageState: { cookies: [], origins: [] } });
+test.beforeEach(({ page }) => offlineCloud(page));
+
+test('first launch: sign-in screen, "continue without signing in" works', async ({ page }) => {
+  await page.goto('./');
+  await expect(page.getByRole('heading', { name: 'Зарплата', level: 1 })).toBeVisible();
+  await expect(page.getByLabel('Email', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Увійти' }).click();
+  await expect(page.getByRole('alert')).toHaveText('Введи email і пароль');
+  await page.getByRole('button', { name: /Продовжити без входу/ }).click();
+  await expect(page.getByRole('heading', { name: /Привіт/ })).toBeVisible();
+  // Remembered across launches.
+  await page.reload();
+  await expect(page.getByRole('heading', { name: /Привіт/ })).toBeVisible();
+});
 
 test('first launch: empty, real defaults (400 / 50, card 15 961, no advance)', async ({ page }) => {
   const assertNoErrors = trackErrors(page);
   await page.goto('./');
+  await page.getByRole('button', { name: /Продовжити без входу/ }).click();
   await appReady(page);
   await expect(page.getByText('Поки що немає розрахунків')).toBeVisible();
   await expect(page.getByText(/демо/i)).toHaveCount(0);
@@ -31,6 +46,7 @@ test('first launch: empty, real defaults (400 / 50, card 15 961, no advance)', a
 
 test('counter on a fresh install creates the month with the standard card amount', async ({ page }) => {
   await page.goto('./');
+  await page.getByRole('button', { name: /Продовжити без входу/ }).click();
   await appReady(page);
   for (let i = 0; i < 3; i++) await page.getByRole('button', { name: 'Пари: плюс один' }).click();
   await expect(page.locator('.counter .counter__value').first()).toContainText('3');
@@ -42,6 +58,7 @@ test('counter on a fresh install creates the month with the standard card amount
 
 test('old demo rows are removed on update, own months stay', async ({ page }) => {
   await page.goto('./');
+  await page.getByRole('button', { name: /Продовжити без входу/ }).click();
   await appReady(page);
   await page.evaluate(() => {
     localStorage.setItem('salary_meta', JSON.stringify({ schemaVersion: 2, seeded: true }));

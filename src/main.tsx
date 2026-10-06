@@ -9,16 +9,19 @@ import { RouterProvider } from './router/router';
 import { SalaryProvider } from './hooks/useSalaryStore';
 import { ToastProvider } from './components/ui/Toast';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
+import { CloudProvider } from './hooks/useCloud';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
       <RouterProvider>
-        <SalaryProvider>
-          <ToastProvider>
-            <App />
-          </ToastProvider>
-        </SalaryProvider>
+        <ToastProvider>
+          <CloudProvider>
+            <SalaryProvider>
+              <App />
+            </SalaryProvider>
+          </CloudProvider>
+        </ToastProvider>
       </RouterProvider>
     </ErrorBoundary>
   </StrictMode>,

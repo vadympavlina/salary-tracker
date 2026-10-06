@@ -1,4 +1,5 @@
 import type { ExportPayload, RateLine, SalaryInput, SalaryProfile, SalaryRecord, SalarySettings } from '../../types/salary';
+import type { SyncMeta } from '../cloud/types';
 import { DEFAULT_PROFILE, DEFAULT_SETTINGS } from '../../data/defaults';
 import { calculateSalary } from '../calculations/salaryCalculator';
 import { LocalStorageAdapter, type StorageAdapter } from './storageAdapter';
@@ -8,7 +9,11 @@ export const STORAGE_KEYS = {
   settings: 'salary_settings',
   profile: 'salary_profile',
   meta: 'salary_meta',
+  sync: 'salary_sync',
 } as const;
+
+/** Before anything was synced, local settings count as "very old": any cloud copy wins over them. */
+const EPOCH = '1970-01-01T00:00:00.000Z';
 
 export const SCHEMA_VERSION = 3;
 
@@ -151,6 +156,24 @@ export function createSalaryStorage(adapter: StorageAdapter = new LocalStorageAd
 
     async saveProfile(profile: SalaryProfile) {
       await adapter.set(STORAGE_KEYS.profile, profile);
+    },
+
+    async loadSync(): Promise<SyncMeta> {
+      const s = await adapter.get<Partial<SyncMeta>>(STORAGE_KEYS.sync);
+      return {
+        tombstones: s?.tombstones && typeof s.tombstones === 'object' ? s.tombstones : {},
+        settingsAt: typeof s?.settingsAt === 'string' ? s.settingsAt : EPOCH,
+        profileAt: typeof s?.profileAt === 'string' ? s.profileAt : EPOCH,
+      };
+    },
+
+    async saveSync(sync: SyncMeta) {
+      await adapter.set(STORAGE_KEYS.sync, sync);
+    },
+
+    /** Removes this device's copy only (used on sign-out; the cloud keeps everything). */
+    async wipeLocal() {
+      for (const key of [STORAGE_KEYS.records, STORAGE_KEYS.settings, STORAGE_KEYS.profile, STORAGE_KEYS.sync]) await adapter.remove(key);
     },
 
     async clearAll() {

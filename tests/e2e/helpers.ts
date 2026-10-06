@@ -61,3 +61,10 @@ export async function settle(page: Page) {
   await page.waitForLoadState('networkidle');
   await page.waitForTimeout(450);
 }
+
+/** Use the in-memory Firebase stand-in instead of the real network (see src/services/cloud/fakeBackend.ts). */
+export async function offlineCloud(page: Page) {
+  await page.addInitScript(() => {
+    (window as unknown as { __SALARY_FAKE_CLOUD__: boolean }).__SALARY_FAKE_CLOUD__ = true;
+  });
+}

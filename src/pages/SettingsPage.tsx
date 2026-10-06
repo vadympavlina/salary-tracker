@@ -1,6 +1,7 @@
 import { useRef, useState, type ReactNode } from 'react';
-import { Banknote, ChevronRight, CreditCard, Download, HandCoins, Moon, Smartphone, Sun, SunMoon, Trash2, Upload, Wallet, Scale } from 'lucide-react';
+import { Banknote, ChevronRight, Cloud, CloudOff, CreditCard, LogOut, Download, HandCoins, Moon, Smartphone, Sun, SunMoon, Trash2, Upload, Wallet, Scale } from 'lucide-react';
 import { useSalary } from '../hooks/useSalaryStore';
+import { useCloud, type SyncStatus } from '../hooks/useCloud';
 import { isIOS, isStandalone, useInstallPrompt } from '../hooks/useInstallPrompt';
 import { ImportError, parseImport, type AppData } from '../services/storage/salaryStorage';
 import type { AdvanceMode, ThemePreference } from '../types/salary';
@@ -17,18 +18,23 @@ interface RowProps {
   icon: ReactNode;
   label: string;
   value?: ReactNode;
+  /** Second line under the label (e.g. sync status). */
+  sub?: ReactNode;
   onClick: () => void;
   danger?: boolean;
 }
 
-function Row({ icon, label, value, onClick, danger }: RowProps) {
+function Row({ icon, label, value, sub, onClick, danger }: RowProps) {
   return (
     <li>
       <button type="button" className={`row${danger ? ' row--danger' : ''}`} onClick={onClick}>
         <span className="row__icon" aria-hidden="true">
           {icon}
         </span>
-        <span className="row__label">{label}</span>
+        <span className="row__label">
+          {label}
+          {sub && <small className="row__sub">{sub}</small>}
+        </span>
         {value !== undefined && <span className="row__value num">{value}</span>}
         <ChevronRight className="row__chevron" size={18} aria-hidden="true" />
       </button>
@@ -36,7 +42,15 @@ function Row({ icon, label, value, onClick, danger }: RowProps) {
   );
 }
 
-type Editor = null | 'profile' | 'pairRate' | 'videoRate' | 'defaultAdvance' | 'defaultCard' | 'advanceMode' | 'theme' | 'clearAll' | 'install';
+type Editor = null | 'account' | 'signOut' | 'profile' | 'pairRate' | 'videoRate' | 'defaultAdvance' | 'defaultCard' | 'advanceMode' | 'theme' | 'clearAll' | 'install';
+
+const SYNC_LABEL: Record<SyncStatus, string> = {
+  idle: 'Підключення…',
+  syncing: 'Синхронізація…',
+  synced: 'Синхронізовано',
+  offline: 'Офлайн — синхронізую пізніше',
+  error: 'Помилка синхронізації',
+};
 
 const THEME_LABEL: Record<ThemePreference, string> = { light: 'Світла', dark: 'Темна', system: 'Як у системі' };
 const THEME_ICON: Record<ThemePreference, ReactNode> = { light: <Sun size={19} />, dark: <Moon size={19} />, system: <SunMoon size={19} /> };
@@ -51,6 +65,8 @@ const RATE_META = {
 export function SettingsPage() {
   const store = useSalary();
   const { settings, profile, records } = store;
+  const cloud = useCloud();
+  const signedIn = !cloud.localOnly && !!cloud.user;
   const toast = useToast();
   const install = useInstallPrompt();
   const [editor, setEditor] = useState<Editor>(null);
@@ -156,13 +172,34 @@ export function SettingsPage() {
         </section>
 
         <section className="settings__section">
+          <h2 className="settings__title">Синхронізація</h2>
+          <ul className="list-card">
+            {signedIn ? (
+              <>
+                <Row icon={<Cloud size={19} />} label={cloud.user!.email ?? 'Акаунт'} sub={SYNC_LABEL[cloud.status]} onClick={() => open('account')} />
+                <Row icon={<LogOut size={19} />} label="Вийти" onClick={() => open('signOut')} />
+              </>
+            ) : (
+              <Row icon={<CloudOff size={19} />} label="Увійти для синхронізації" value="Вимкнено" onClick={cloud.requestSignIn} />
+            )}
+          </ul>
+          <p className="settings__note">
+            {signedIn
+              ? 'Дані зберігаються в хмарі Firebase й на цьому пристрої — працює й без інтернету, синхронізується, щойно з’явиться мережа.'
+              : 'Зараз дані лише на цьому пристрої. Увійди, щоб вони зберігались у хмарі й були на всіх пристроях.'}
+          </p>
+        </section>
+
+        <section className="settings__section">
           <h2 className="settings__title">Дані</h2>
           <ul className="list-card">
             <Row icon={<Download size={19} />} label="Експорт даних" value="JSON" onClick={exportData} />
             <Row icon={<Upload size={19} />} label="Імпорт даних" onClick={() => fileRef.current?.click()} />
             <Row icon={<Trash2 size={19} />} label="Видалити всі дані" onClick={() => open('clearAll')} danger />
           </ul>
-          <p className="settings__note">Дані зберігаються лише на цьому пристрої. Роби експорт, щоб мати резервну копію або перенести дані.</p>
+          <p className="settings__note">
+            {signedIn ? 'Експорт — додаткова резервна копія у файл (JSON).' : 'Дані зберігаються лише на цьому пристрої. Роби експорт, щоб мати резервну копію або перенести дані.'}
+          </p>
           <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={(e) => onFile(e.target.files?.[0])} />
         </section>
 
@@ -306,7 +343,11 @@ export function SettingsPage() {
         open={editor === 'clearAll'}
         onClose={close}
         title="Видалити всі дані?"
-        description="Усі розрахунки, ставки та профіль буде видалено з цього пристрою. Дію не можна скасувати — спершу зроби експорт."
+        description={
+          signedIn
+            ? 'Усі розрахунки, ставки та профіль буде видалено з хмари й з усіх пристроїв. Дію не можна скасувати — спершу зроби експорт.'
+            : 'Усі розрахунки, ставки та профіль буде видалено з цього пристрою. Дію не можна скасувати — спершу зроби експорт.'
+        }
         footer={
           <>
             <Button variant="secondary" onClick={close}>
@@ -323,6 +364,55 @@ export function SettingsPage() {
               }}
             >
               Видалити все
+            </Button>
+          </>
+        }
+      />
+
+      {/* Account / sync status */}
+      <Modal open={editor === 'account'} onClose={close} title="Синхронізація" footer={<Button block onClick={close}>Готово</Button>}>
+        <dl className="account">
+          <div>
+            <dt>Акаунт</dt>
+            <dd>{cloud.user?.email}</dd>
+          </div>
+          <div>
+            <dt>Стан</dt>
+            <dd>{SYNC_LABEL[cloud.status]}</dd>
+          </div>
+          <div>
+            <dt>Розрахунків</dt>
+            <dd className="num">{records.length}</dd>
+          </div>
+        </dl>
+      </Modal>
+
+      {/* Sign out */}
+      <Modal
+        open={editor === 'signOut'}
+        onClose={close}
+        title="Вийти з акаунта?"
+        description={
+          cloud.status === 'synced'
+            ? 'Усі дані збережені в хмарі. З цього пристрою їх буде прибрано — після входу вони повернуться.'
+            : 'Схоже, не всі зміни ще встигли синхронізуватися. Підключись до інтернету й зачекай кілька секунд — інакше останні зміни з цього пристрою можуть загубитися.'
+        }
+        footer={
+          <>
+            <Button variant="secondary" onClick={close}>
+              Скасувати
+            </Button>
+            <Button
+              variant="danger"
+              className="grow"
+              icon={<LogOut size={18} />}
+              onClick={async () => {
+                close();
+                await cloud.signOut();
+                await store.wipeLocal();
+              }}
+            >
+              Вийти
             </Button>
           </>
         }

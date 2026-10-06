@@ -22,6 +22,8 @@ export default function globalSetup() {
             { name: 'salary_meta', value: JSON.stringify({ schemaVersion: 3 }) },
             { name: 'salary_records', value: JSON.stringify(records) },
             { name: 'salary_settings', value: JSON.stringify(settings) },
+            // Most tests use the app without signing in; cloud.spec.ts covers sign-in + sync.
+            { name: 'salary_cloud_mode', value: 'local' },
           ],
         },
       ],

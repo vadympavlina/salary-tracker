@@ -3,6 +3,9 @@ import type { SalaryInput, SalaryProfile, SalaryRecord, SalarySettings } from '.
 import { buildExport, buildRecord, salaryStorage, type AppData } from '../services/storage/salaryStorage';
 import { DEFAULT_PROFILE, DEFAULT_SETTINGS } from '../data/defaults';
 import { currentPeriod } from '../utils/period';
+import { useCloud } from './useCloud';
+import { applyUpdates, mergeWithRemote } from '../services/cloud/merge';
+import type { RemoteData, SyncMeta } from '../services/cloud/types';
 
 /** A calculation in progress (between the form and the result screen). */
 export interface Draft {
@@ -46,6 +49,8 @@ interface SalaryStore extends AppData {
   updateProfile: (patch: Partial<SalaryProfile>) => Promise<void>;
   clearAll: () => Promise<void>;
   importData: (data: AppData, mode: 'replace' | 'merge') => Promise<number>;
+  /** Removes this device's copy (after sign-out); the cloud is untouched. */
+  wipeLocal: () => Promise<void>;
   exportJson: () => string;
 }
 
@@ -59,15 +64,21 @@ export function SalaryProvider({ children }: { children: ReactNode }) {
   const ref = useRef(data);
   ref.current = data;
 
+  // Sync bookkeeping: deleted months (tombstones) and when settings/profile last changed.
+  const syncRef = useRef<SyncMeta>({ tombstones: {} });
+
   useEffect(() => {
-    salaryStorage.load().then((d) => {
+    Promise.all([salaryStorage.load(), salaryStorage.loadSync()]).then(([d, sync]) => {
+      syncRef.current = sync;
+      ref.current = d;
       setData(d);
       setReady(true);
     });
     // Another tab / the installed app changed the data → pick it up here too.
     const onStorage = (e: StorageEvent) => {
       if (e.key && !e.key.startsWith('salary_')) return;
-      salaryStorage.load().then((d) => {
+      Promise.all([salaryStorage.load(), salaryStorage.loadSync()]).then(([d, sync]) => {
+        syncRef.current = sync;
         ref.current = d;
         setData(d);
       });
@@ -90,11 +101,94 @@ export function SalaryProvider({ children }: { children: ReactNode }) {
     return run;
   }, []);
 
-  const commitRecords = useCallback(async (records: SalaryRecord[]) => {
-    const sorted = await salaryStorage.saveRecords(records);
-    ref.current = { ...ref.current, records: sorted };
-    setData((d) => ({ ...d, records: sorted }));
+  // ---------- Cloud sync (Firebase) ----------
+  const cloud = useCloud();
+  const remoteRef = useRef<RemoteData | null>(null);
+  const uidRef = useRef<string | null>(null);
+  const onlineRef = useRef(true);
+  const { setStatus, backend } = cloud;
+
+  const saveSync = useCallback(async (patch: Partial<SyncMeta>) => {
+    syncRef.current = { ...syncRef.current, ...patch };
+    await salaryStorage.saveSync(syncRef.current);
   }, []);
+
+  /** Merge local ↔ cloud: apply newer cloud data here, upload newer local data there. */
+  const reconcile = useCallback(async () => {
+    const uid = uidRef.current;
+    const remote = remoteRef.current;
+    if (!uid || !remote) return;
+    const result = mergeWithRemote({ ...ref.current, sync: syncRef.current }, remote);
+    if (result.localChanged) {
+      const { records, settings, profile, sync } = result.local;
+      const sorted = await salaryStorage.saveRecords(records);
+      await salaryStorage.saveSettings(settings);
+      await salaryStorage.saveProfile(profile);
+      await saveSync(sync);
+      ref.current = { records: sorted, settings, profile };
+      setData(ref.current);
+    }
+    if (Object.keys(result.updates).length) {
+      remoteRef.current = applyUpdates(remote, result.updates);
+      setStatus(onlineRef.current ? 'syncing' : 'offline');
+      backend
+        .write(uid, result.updates)
+        .then(() => setStatus(onlineRef.current ? 'synced' : 'offline'))
+        .catch(() => setStatus('error'));
+    } else {
+      setStatus(onlineRef.current ? 'synced' : 'offline');
+    }
+  }, [backend, saveSync, setStatus]);
+
+  // Local edits are pushed shortly after they happen (rapid counter taps go out as one write).
+  const pushTimer = useRef<number | undefined>(undefined);
+  const schedulePush = useCallback(() => {
+    window.clearTimeout(pushTimer.current);
+    pushTimer.current = window.setTimeout(() => void reconcile(), 400);
+  }, [reconcile]);
+
+  const syncUid = cloud.localOnly ? null : (cloud.user?.uid ?? null);
+  useEffect(() => {
+    if (!ready || !syncUid) return;
+    uidRef.current = syncUid;
+    setStatus('syncing');
+    const stopData = backend.subscribe(
+      syncUid,
+      (remote) => {
+        remoteRef.current = remote;
+        void reconcile();
+      },
+      () => setStatus('error'),
+    );
+    const stopConn = backend.onConnection((online) => {
+      onlineRef.current = online;
+      if (online) void reconcile();
+      else setStatus('offline');
+    });
+    return () => {
+      stopData();
+      stopConn();
+      uidRef.current = null;
+      remoteRef.current = null;
+    };
+  }, [ready, syncUid, backend, reconcile, setStatus]);
+
+  const commitRecords = useCallback(
+    async (records: SalaryRecord[]) => {
+      // A month that disappears gets a tombstone so the deletion reaches other devices.
+      const now = new Date().toISOString();
+      const kept = new Set(records.map((r) => r.period));
+      const tombstones = { ...syncRef.current.tombstones };
+      for (const r of ref.current.records) if (!kept.has(r.period)) tombstones[r.period] = now;
+      for (const p of kept) delete tombstones[p];
+      await saveSync({ tombstones });
+      const sorted = await salaryStorage.saveRecords(records);
+      ref.current = { ...ref.current, records: sorted };
+      setData((d) => ({ ...d, records: sorted }));
+      schedulePush();
+    },
+    [saveSync, schedulePush],
+  );
 
   const saveRecord = useCallback(
     async (input: SalaryInput, editId?: string) => {
@@ -148,46 +242,72 @@ export function SalaryProvider({ children }: { children: ReactNode }) {
 
   const restoreRecord = useCallback(
     async (record: SalaryRecord) => {
-      await commitRecords([...ref.current.records.filter((r) => r.period !== record.period), record]);
+      // Restored months count as a fresh edit so they win over their own deletion.
+      const restored = { ...record, updatedAt: new Date().toISOString() };
+      await commitRecords([...ref.current.records.filter((r) => r.period !== record.period), restored]);
     },
     [commitRecords],
   );
 
-  const updateSettings = useCallback(async (patch: Partial<SalarySettings>) => {
-    const settings = { ...ref.current.settings, ...patch };
-    await salaryStorage.saveSettings(settings);
-    setData((d) => ({ ...d, settings }));
-  }, []);
+  const updateSettings = useCallback(
+    async (patch: Partial<SalarySettings>) => {
+      const settings = { ...ref.current.settings, ...patch };
+      await salaryStorage.saveSettings(settings);
+      await saveSync({ settingsAt: new Date().toISOString() });
+      ref.current = { ...ref.current, settings };
+      setData((d) => ({ ...d, settings }));
+      schedulePush();
+    },
+    [saveSync, schedulePush],
+  );
 
-  const updateProfile = useCallback(async (patch: Partial<SalaryProfile>) => {
-    const profile = { ...ref.current.profile, ...patch };
-    await salaryStorage.saveProfile(profile);
-    setData((d) => ({ ...d, profile }));
-  }, []);
+  const updateProfile = useCallback(
+    async (patch: Partial<SalaryProfile>) => {
+      const profile = { ...ref.current.profile, ...patch };
+      await salaryStorage.saveProfile(profile);
+      await saveSync({ profileAt: new Date().toISOString() });
+      ref.current = { ...ref.current, profile };
+      setData((d) => ({ ...d, profile }));
+      schedulePush();
+    },
+    [saveSync, schedulePush],
+  );
 
+  /** "Видалити всі дані": deletes everywhere (synced as deletions + default settings). */
   const clearAll = useCallback(async () => {
-    await salaryStorage.clearAll();
-    setData({ records: [], settings: DEFAULT_SETTINGS, profile: DEFAULT_PROFILE });
+    await commitRecords([]);
+    await updateSettings(DEFAULT_SETTINGS);
+    await updateProfile(DEFAULT_PROFILE);
+    setDraft(null);
+  }, [commitRecords, updateSettings, updateProfile, setDraft]);
+
+  const wipeLocal = useCallback(async () => {
+    window.clearTimeout(pushTimer.current);
+    await salaryStorage.wipeLocal();
+    syncRef.current = await salaryStorage.loadSync();
+    ref.current = { records: [], settings: DEFAULT_SETTINGS, profile: DEFAULT_PROFILE };
+    setData(ref.current);
     setDraft(null);
   }, [setDraft]);
 
   const importData = useCallback(
     async (incoming: AppData, mode: 'replace' | 'merge') => {
-      let records = incoming.records;
+      // Imported months are a fresh edit: they must win over older copies in the cloud.
+      const now = new Date().toISOString();
+      let records = incoming.records.map((r) => ({ ...r, updatedAt: now }));
       if (mode === 'merge') {
         // Imported months win over existing ones.
         const periods = new Set(incoming.records.map((r) => r.period));
-        records = [...ref.current.records.filter((r) => !periods.has(r.period)), ...incoming.records];
+        records = [...ref.current.records.filter((r) => !periods.has(r.period)), ...records];
       }
       await commitRecords(records);
       if (mode === 'replace') {
-        await salaryStorage.saveSettings(incoming.settings);
-        await salaryStorage.saveProfile(incoming.profile);
-        setData((d) => ({ ...d, settings: incoming.settings, profile: incoming.profile }));
+        await updateSettings(incoming.settings);
+        await updateProfile(incoming.profile);
       }
       return incoming.records.length;
     },
-    [commitRecords],
+    [commitRecords, updateSettings, updateProfile],
   );
 
   const value = useMemo<SalaryStore>(
@@ -206,9 +326,10 @@ export function SalaryProvider({ children }: { children: ReactNode }) {
       updateProfile,
       clearAll,
       importData,
+      wipeLocal,
       exportJson: () => JSON.stringify(buildExport(ref.current), null, 2),
     }),
-    [data, ready, draft, setDraft, saveRecord, bumpCurrentMonth, deleteRecord, restoreRecord, updateSettings, updateProfile, clearAll, importData],
+    [data, ready, draft, setDraft, saveRecord, bumpCurrentMonth, deleteRecord, restoreRecord, updateSettings, updateProfile, clearAll, importData, wipeLocal],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

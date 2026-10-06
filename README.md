@@ -64,6 +64,12 @@ src/
   styles/                   дизайн-токени та стилі
 ```
 
-Щоб перейти на Firebase, достатньо реалізувати `StorageAdapter` (`get/set/remove`) і передати його в `createSalaryStorage()` — UI та розрахунки не змінюються.
+### Синхронізація (Firebase Realtime Database)
+
+- Вхід email + пароль (Firebase Auth); користувачі створюються в консолі Firebase → Authentication.
+- Дані користувача: `salary/{uid}/records/{YYYY-MM}`, `salary/{uid}/settings`, `salary/{uid}/profile`. Правила бази дозволяють читати/писати лише власний `salary/{uid}`.
+- Local-first: застосунок завжди працює з локальної копії (localStorage, миттєво й офлайн), а `src/services/cloud/merge.ts` двосторонньо зливає її з хмарою — новіший `updatedAt` виграє, видалення передаються як «tombstone».
+- Firebase SDK завантажується ліниво й лише якщо користувач увійшов; режим «Продовжити без входу» працює зовсім без мережі.
+- e2e-тести використовують фейковий бекенд (`window.__SALARY_FAKE_CLOUD__`).
 
 Ключі localStorage: `salary_records`, `salary_settings`, `salary_profile`, `salary_meta`.

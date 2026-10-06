@@ -239,13 +239,33 @@ interface TextProps {
   onChange: (v: string) => void;
   autoComplete?: string;
   maxLength?: number;
+  type?: 'text' | 'email' | 'password';
+  icon?: ReactNode;
+  trailing?: ReactNode;
+  error?: string;
+  inputMode?: 'text' | 'email';
+  enterKeyHint?: 'next' | 'go' | 'done';
 }
 
-export function TextInput({ label, value, onChange, autoComplete, maxLength = 60 }: TextProps) {
+export function TextInput({ label, value, onChange, autoComplete, maxLength = 60, type = 'text', icon, trailing, error, inputMode, enterKeyHint }: TextProps) {
   const id = useId();
   return (
-    <FieldShell id={id} label={label}>
-      <input id={id} className="field__input field__input--text" type="text" value={value} maxLength={maxLength} autoComplete={autoComplete} onChange={(e) => onChange(e.target.value)} />
+    <FieldShell id={id} label={label} icon={icon} trailing={trailing} error={error}>
+      <input
+        id={id}
+        className="field__input field__input--text"
+        type={type}
+        value={value}
+        maxLength={maxLength}
+        autoComplete={autoComplete}
+        inputMode={inputMode}
+        enterKeyHint={enterKeyHint}
+        autoCapitalize="none"
+        spellCheck={false}
+        aria-invalid={!!error}
+        aria-describedby={error ? `${id}-msg` : undefined}
+        onChange={(e) => onChange(e.target.value)}
+      />
     </FieldShell>
   );
 }
