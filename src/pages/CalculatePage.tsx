@@ -84,9 +84,8 @@ export function CalculatePage() {
       received: toNumber(form.received),
       cashReceived: toNumber(form.cashReceived),
       advanceMode: editing?.advanceMode ?? settings.advanceMode,
-      taxRate: editing?.taxRate ?? settings.taxRate,
     }),
-    [form, editing, settings.advanceMode, settings.taxRate],
+    [form, editing, settings.advanceMode],
   );
   const calc = useMemo(() => calculateSalary(input), [input]);
 

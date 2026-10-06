@@ -25,8 +25,6 @@ export interface SalaryInput {
   cashReceived: number;
   /** Snapshot of the setting at the time of saving, so history never changes retroactively. */
   advanceMode: AdvanceMode;
-  /** Informational tax rate (%), rates are entered net of tax. */
-  taxRate: number;
   note?: string;
 }
 
@@ -58,15 +56,12 @@ export interface SalaryCalculation {
   totalReceived: number;
   /** What is still owed (never negative) = на руки − отримано на руки. */
   remaining: number;
-  /** Informational: tax withheld on top of grossIncome at `taxRate`. */
-  taxEstimate: number;
   status: PaymentStatus;
 }
 
 export interface SalarySettings {
   pairRate: number;
   videoRate: number;
-  taxRate: number;
   advanceMode: AdvanceMode;
   /** Default advance pre-filled into a new calculation (0 = empty). */
   defaultAdvance: number;

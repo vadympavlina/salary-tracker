@@ -1,15 +1,15 @@
 import { useRef, useState, type ReactNode } from 'react';
-import { Banknote, ChevronRight, Download, Eraser, HandCoins, Percent, Smartphone, Trash2, Upload, Wallet, Scale } from 'lucide-react';
+import { Banknote, ChevronRight, Download, Eraser, HandCoins, Smartphone, Trash2, Upload, Wallet, Scale } from 'lucide-react';
 import { useSalary } from '../hooks/useSalaryStore';
 import { isIOS, isStandalone, useInstallPrompt } from '../hooks/useInstallPrompt';
 import { ImportError, parseImport, type AppData } from '../services/storage/salaryStorage';
 import type { AdvanceMode } from '../types/salary';
-import { formatNumber, formatUAH, plural } from '../utils/format';
+import { formatUAH, plural } from '../utils/format';
 import { fromNumber, toNumber } from '../utils/input';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
-import { CurrencyInput, NumberInput, TextInput } from '../components/ui/fields';
+import { CurrencyInput, TextInput } from '../components/ui/fields';
 import { Segmented } from '../components/ui/Segmented';
 import { useToast } from '../components/ui/Toast';
 
@@ -36,7 +36,7 @@ function Row({ icon, label, value, onClick, danger }: RowProps) {
   );
 }
 
-type Editor = null | 'profile' | 'pairRate' | 'videoRate' | 'taxRate' | 'defaultAdvance' | 'advanceMode' | 'clearAll' | 'clearDemo' | 'install';
+type Editor = null | 'profile' | 'pairRate' | 'videoRate' | 'defaultAdvance' | 'advanceMode' | 'clearAll' | 'clearDemo' | 'install';
 
 const RATE_META = {
   pairRate: { title: 'Ставка за пару', label: 'Ставка за пару', icon: <Banknote size={20} /> },
@@ -65,7 +65,7 @@ export function SettingsPage() {
     .toUpperCase();
 
   const open = (e: Exclude<Editor, null>) => {
-    if (e === 'pairRate' || e === 'videoRate' || e === 'defaultAdvance' || e === 'taxRate') setValue(fromNumber(settings[e]));
+    if (e === 'pairRate' || e === 'videoRate' || e === 'defaultAdvance') setValue(fromNumber(settings[e]));
     if (e === 'profile') setText({ ...profile });
     if (e === 'advanceMode') setMode(settings.advanceMode);
     setEditor(e);
@@ -73,7 +73,7 @@ export function SettingsPage() {
   const close = () => setEditor(null);
 
   const saveNumber = async () => {
-    if (editor === 'pairRate' || editor === 'videoRate' || editor === 'defaultAdvance' || editor === 'taxRate') {
+    if (editor === 'pairRate' || editor === 'videoRate' || editor === 'defaultAdvance') {
       await store.updateSettings({ [editor]: toNumber(value) });
       toast('Збережено. Нові розрахунки використають це значення.');
     }
@@ -140,7 +140,6 @@ export function SettingsPage() {
             <Row icon={<Wallet size={19} />} label="Ставка за відео" value={formatUAH(settings.videoRate)} onClick={() => open('videoRate')} />
             <Row icon={<HandCoins size={19} />} label="Типовий аванс" value={settings.defaultAdvance ? formatUAH(settings.defaultAdvance) : 'Немає'} onClick={() => open('defaultAdvance')} />
             <Row icon={<Scale size={19} />} label="Режим авансу" value={settings.advanceMode === 'part' ? 'Частина ЗП' : 'Додатковий'} onClick={() => open('advanceMode')} />
-            <Row icon={<Percent size={19} />} label="Податкова ставка" value={`${formatNumber(settings.taxRate, true)}%`} onClick={() => open('taxRate')} />
           </ul>
           <p className="settings__note">Ставки автоматично підставляються в новий розрахунок — для конкретного місяця їх можна змінити. Збережені розрахунки не змінюються.</p>
         </section>
@@ -203,21 +202,6 @@ export function SettingsPage() {
         }
       >
         {isRateEditor && <CurrencyInput label={RATE_META[editor].label} value={value} onChange={setValue} icon={RATE_META[editor].icon} max={10_000_000} />}
-      </Modal>
-
-      {/* Tax */}
-      <Modal
-        open={editor === 'taxRate'}
-        onClose={close}
-        title="Податкова ставка"
-        description="Ставки вводяться вже без податку, тому податок показується лише довідково в деталях розрахунку. Постав 0, щоб приховати."
-        footer={
-          <Button block onClick={saveNumber}>
-            Зберегти
-          </Button>
-        }
-      >
-        <NumberInput label="Ставка, %" value={value} onChange={setValue} icon={<Percent size={20} />} max={99} step={0.5} decimal />
       </Modal>
 
       {/* Advance mode */}

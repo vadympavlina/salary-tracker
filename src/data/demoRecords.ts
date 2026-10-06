@@ -1,6 +1,6 @@
 import type { SalaryInput } from '../types/salary';
 
-type DemoRow = Omit<SalaryInput, 'advanceMode' | 'taxRate'>;
+type DemoRow = Omit<SalaryInput, 'advanceMode'>;
 
 /** Demo months shown on first launch. Earned: 18 420 … 28 450 ₴. */
 const rows: DemoRow[] = [
@@ -12,4 +12,4 @@ const rows: DemoRow[] = [
   { period: '2026-10', pairs: 12, pairRate: 350, videos: 510, videoRate: 45, advance: 5000, additional: 1300, received: 15000, cashReceived: 8450 },
 ];
 
-export const DEMO_INPUTS: SalaryInput[] = rows.map((r) => ({ ...r, advanceMode: 'part', taxRate: 9 }));
+export const DEMO_INPUTS: SalaryInput[] = rows.map((r) => ({ ...r, advanceMode: 'part' }));

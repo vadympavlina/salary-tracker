@@ -55,9 +55,6 @@ export function CalculationBreakdown({ input, calc }: { input: SalaryInput; calc
 
       <Group title="Загальна сума">
         <Row label="Всього нараховано" value={formatUAH(calc.grossIncome)} strong />
-        {input.taxRate > 0 && (
-          <Row label={`Податки (${formatNumber(input.taxRate, true)}%)`} sub="вже утримано, довідково" value={`≈ ${formatUAH(Math.round(calc.taxEstimate))}`} tone="muted" />
-        )}
       </Group>
 
       <Group title="Виплата">

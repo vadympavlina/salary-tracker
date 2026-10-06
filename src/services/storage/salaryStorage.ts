@@ -66,7 +66,6 @@ export function normalizeRecord(raw: unknown): SalaryRecord | null {
     received: num(r.received),
     cashReceived: num(r.cashReceived),
     advanceMode: r.advanceMode === 'extra' ? 'extra' : 'part',
-    taxRate: Math.min(num(r.taxRate, DEFAULT_SETTINGS.taxRate), 99),
     note: typeof r.note === 'string' ? r.note.slice(0, 500) : undefined,
   };
   const now = new Date().toISOString();
@@ -85,7 +84,6 @@ export function normalizeSettings(raw: unknown): SalarySettings {
   return {
     pairRate: num(s.pairRate, DEFAULT_SETTINGS.pairRate),
     videoRate: num(s.videoRate, DEFAULT_SETTINGS.videoRate),
-    taxRate: Math.min(num(s.taxRate, DEFAULT_SETTINGS.taxRate), 99),
     advanceMode: s.advanceMode === 'extra' ? 'extra' : 'part',
     defaultAdvance: num(s.defaultAdvance, DEFAULT_SETTINGS.defaultAdvance),
   };

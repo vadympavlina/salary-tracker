@@ -31,8 +31,6 @@ export function calculateSalary(input: SalaryInput): SalaryCalculation {
   const totalReceived = round2(advance + received + cashReceived);
   const remaining = round2(Math.max(0, netIncome - cashReceived));
 
-  const taxRate = Math.min(Math.max(safe(input.taxRate), 0), 99);
-  const taxEstimate = round2((grossIncome * taxRate) / (100 - taxRate));
 
   return {
     pairIncome,
@@ -46,7 +44,6 @@ export function calculateSalary(input: SalaryInput): SalaryCalculation {
     cashReceived,
     totalReceived,
     remaining,
-    taxEstimate,
     status: getPaymentStatus(grossIncome, totalReceived),
   };
 }

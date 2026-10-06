@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { calculateSalary, getPaymentStatus, percentChange } from '../services/calculations/salaryCalculator';
 import { buildMonthlySeries, incomeStructure, seriesStats } from '../services/calculations/analytics';
-import { createSalaryStorage, parseImport, buildExport, ImportError } from '../services/storage/salaryStorage';
+import { createSalaryStorage, parseImport, buildExport, ImportError, normalizeRecord } from '../services/storage/salaryStorage';
 import type { StorageAdapter } from '../services/storage/storageAdapter';
 import type { SalaryInput } from '../types/salary';
 import { formatUAH } from '../utils/format';
@@ -20,7 +20,6 @@ const base: SalaryInput = {
   received: 10000,
   cashReceived: 0,
   advanceMode: 'part',
-  taxRate: 9,
 };
 
 describe('calculateSalary', () => {
@@ -65,10 +64,10 @@ describe('calculateSalary', () => {
     expect(c.grossIncome).toBe(0);
   });
 
-  it('tax is informational', () => {
-    const c = calculateSalary({ ...base, taxRate: 9 });
-    expect(c.grossIncome).toBe(16560);
-    expect(c.taxEstimate).toBeCloseTo((16560 * 9) / 91, 1);
+  it('ignores a legacy taxRate field from old saves', () => {
+    const legacy = normalizeRecord({ ...base, taxRate: 9 });
+    expect(legacy).not.toHaveProperty('taxRate');
+    expect(calculateSalary(legacy!).grossIncome).toBe(16560);
   });
 
   it('percentChange', () => {
