@@ -63,7 +63,10 @@ export function App() {
     page = <RecordPage id={recordId.id} />;
     pushed = true;
   } else if (path === '/analytics') page = <AnalyticsPage />;
-  else if (path === '/settings') page = <SettingsPage />;
+  else if (path === '/settings') {
+    page = <SettingsPage />;
+    pushed = true;
+  }
   else page = <NotFoundPage />;
 
   return (

@@ -7,7 +7,7 @@ const PAGES = [
   { name: 'Історія', path: '#/history', heading: 'Історія' },
   { name: 'Деталі', path: '#/history/:first', heading: /\d{4}/, pushed: true },
   { name: 'Аналітика', path: '#/analytics', heading: 'Аналітика' },
-  { name: 'Налаштування', path: '#/settings', heading: 'Налаштування' },
+  { name: 'Налаштування', path: '#/settings', heading: 'Налаштування', pushed: true },
 ];
 
 async function firstRecordId(page: Page) {
@@ -54,9 +54,16 @@ for (const p of PAGES) {
       expect(mode).toBe(expected);
       const nav = page.getByRole('navigation', { name: 'Основна навігація' }).filter({ visible: true });
       await expect(nav).toHaveCount(1);
-      for (const label of ['Головна', 'Розрахунок', 'Історія', 'Аналітика', 'Профіль']) {
+      for (const label of ['Головна', 'Розрахунок', 'Історія', 'Аналітика']) {
         await expect(nav.getByRole('link', { name: label })).toBeVisible();
       }
+      // Tab labels are never cut off (with room to spare for wider fonts such as SF Pro on iOS).
+      const clipped = await page.evaluate(() =>
+        [...document.querySelectorAll<HTMLElement>('.tabbar__item span')]
+          .filter((s) => s.offsetParent && s.scrollWidth > s.parentElement!.clientWidth - 12)
+          .map((s) => `${s.textContent} ${s.scrollWidth}/${s.parentElement!.clientWidth}`),
+      );
+      expect(clipped, 'clipped tab labels').toEqual([]);
     }
 
     // Touch screens: every control is at least 44×44 (input text boxes are covered by their 72px tappable card).

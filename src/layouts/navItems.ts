@@ -1,4 +1,4 @@
-import { ChartColumn, Calculator, House, Layers, UserRound, type LucideIcon } from 'lucide-react';
+import { ChartColumn, Calculator, House, Layers, type LucideIcon } from 'lucide-react';
 
 export interface NavItem {
   to: string;
@@ -13,5 +13,4 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/calculate', label: 'Розрахунок', icon: Calculator, match: (p) => p.startsWith('/calculate') },
   { to: '/history', label: 'Історія', icon: Layers, match: (p) => p.startsWith('/history') },
   { to: '/analytics', label: 'Аналітика', icon: ChartColumn, match: (p) => p.startsWith('/analytics') },
-  { to: '/settings', label: 'Профіль', icon: UserRound, match: (p) => p.startsWith('/settings') },
 ];

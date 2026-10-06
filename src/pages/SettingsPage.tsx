@@ -141,7 +141,7 @@ export function SettingsPage() {
 
   return (
     <>
-      <PageHeader title="Налаштування" />
+      <PageHeader title="Налаштування" backTo="/" />
       <div className="settings">
         <button type="button" className="profile-card card" onClick={() => open('profile')}>
           <span className="avatar">{initials}</span>

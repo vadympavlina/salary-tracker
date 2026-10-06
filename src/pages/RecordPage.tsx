@@ -111,7 +111,7 @@ export function RecordPage({ id }: { id: string }) {
         />
       </div>
       <div className="action-bar action-bar--sticky">
-        <Button variant="danger" icon={<Trash2 size={18} />} onClick={() => setConfirm(true)}>
+        <Button variant="danger" icon={<Trash2 size={18} />} onClick={() => setConfirm(true)} aria-label="Видалити" className="btn--compact">
           Видалити
         </Button>
         <Button icon={<PencilLine size={18} />} onClick={edit} className="grow">

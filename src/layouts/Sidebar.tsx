@@ -37,11 +37,11 @@ export function Sidebar() {
           })}
         </ul>
       </nav>
-      <Link to="/settings" className="sidebar__profile">
+      <Link to="/settings" className={`sidebar__profile${path.startsWith('/settings') ? ' is-active' : ''}`} aria-current={path.startsWith('/settings') ? 'page' : undefined}>
         <span className="avatar avatar--sm">{initials}</span>
         <span>
           <b>{profile.fullName}</b>
-          <small>Особистий профіль</small>
+          <small>Профіль і налаштування</small>
         </span>
       </Link>
     </aside>

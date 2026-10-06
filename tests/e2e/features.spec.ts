@@ -1,5 +1,5 @@
-import { test, expect } from '@playwright/test';
-import { appReady, field, settle, trackErrors, uah } from './helpers';
+import { test, expect, type Locator, type Page } from '@playwright/test';
+import { appReady, expectTappable, field, settle, trackErrors, uah } from './helpers';
 
 test('month counter: +1 / −1 on the home screen, survives reload', async ({ page }) => {
   const assertNoErrors = trackErrors(page);
@@ -124,4 +124,53 @@ test('dark theme: every page renders cleanly', async ({ page }, testInfo) => {
     expect(light, `${name}: light surfaces in dark theme`).toEqual([]);
     await testInfo.attach(`dark-${name}.png`, { body: await page.screenshot({ fullPage: true }), contentType: 'image/png' });
   }
+});
+
+/** Drags horizontally across an element with real touch events (Chromium DevTools protocol). */
+async function swipe(page: Page, target: Locator, dx: number) {
+  // Chromium treats a touch that follows a tap within ~300 ms as a possible double-tap and cancels it;
+  // a person never swipes that fast after tapping, the test runner does.
+  await page.waitForTimeout(400);
+  const box = (await target.boundingBox())!;
+  const cdp = await page.context().newCDPSession(page);
+  const y = box.y + box.height / 2;
+  const x = box.x + box.width - 40;
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+  for (let i = 1; i <= 12; i++) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x + (dx * i) / 12, y }] });
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await cdp.detach();
+}
+
+test('history: swipe a month left → Змінити / Видалити, delete can be undone', async ({ page, browserName }, testInfo) => {
+  test.skip(browserName !== 'chromium' || !testInfo.project.use.hasTouch, 'touch swipe via Chromium protocol');
+  await page.goto('#/history');
+  await appReady(page);
+  const rows = page.locator('.history-item');
+  await expect(rows).toHaveCount(6);
+  const first = page.locator('.swipe').first();
+
+  // A short swipe opens the actions; a tap on the row closes them without navigating.
+  await swipe(page, first, -120);
+  await expect(first).toHaveClass(/swipe--open/);
+  await expectTappable(first.getByRole('button', { name: 'Видалити' }));
+  await rows.first().click();
+  await expect(first).not.toHaveClass(/swipe--open/);
+  await expect(page).toHaveURL(/#\/history$/);
+
+  // Змінити opens the editor for that month.
+  await swipe(page, first, -120);
+  await first.getByRole('button', { name: 'Змінити' }).click();
+  await expect(page.getByRole('heading', { name: 'Редагування' })).toBeVisible();
+  await page.goBack();
+
+  // Видалити removes the month; "Скасувати" in the toast brings it back.
+  await swipe(page, page.locator('.swipe').first(), -120);
+  await page.locator('.swipe').first().getByRole('button', { name: 'Видалити' }).click();
+  await expect(rows).toHaveCount(5);
+  await page.getByRole('button', { name: 'Скасувати' }).click();
+  await expect(rows).toHaveCount(6);
+
+  // A long swipe deletes straight away.
+  await swipe(page, page.locator('.swipe').first(), -((await page.locator('.swipe').first().boundingBox())!.width * 0.8));
+  await expect(rows).toHaveCount(5);
 });

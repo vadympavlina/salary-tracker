@@ -16,6 +16,8 @@ body {
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
+  /* No double-tap zoom (pinch zoom stays): taps react instantly and don't swallow the next swipe. */
+  touch-action: manipulation;
 }
 
 h1, h2, h3, p { margin: 0; }

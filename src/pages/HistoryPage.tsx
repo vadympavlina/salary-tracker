@@ -106,7 +106,7 @@ export function HistoryPage() {
                 }
               >
                 {items.map(({ r }) => (
-                  <HistoryItem key={r.id} record={r} />
+                  <HistoryItem key={r.id} record={r} swipeable />
                 ))}
               </Group>
             ))

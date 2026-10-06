@@ -79,6 +79,7 @@ test('full flow: create → calculate → save → history → edit → delete �
   await expect(page.getByRole('heading', { name: 'Перевірені відео' })).toBeVisible();
 
   // 9. Settings: new default rate
+  await page.getByRole('link', { name: 'Головна' }).first().click();
   await page.getByRole('link', { name: 'Профіль' }).first().click();
   await page.getByRole('button', { name: /Ставка за пару/ }).click();
   await page.getByRole('dialog').getByLabel('Ставка за пару').fill('400');

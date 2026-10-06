@@ -15,6 +15,14 @@ import { ChartCard } from '../components/analytics/ChartCard';
 import { BarChart } from '../components/analytics/BarChart';
 import { buildMonthlySeries } from '../services/calculations/analytics';
 
+const initials = (name: string) =>
+  name
+    .split(/\s+/)
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+
 const today = () => new Intl.DateTimeFormat('uk-UA', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
 
 export function HomePage() {
@@ -26,9 +34,14 @@ export function HomePage() {
       eyebrow={today()}
       title={`Привіт, ${profile.firstName}`}
       actions={
-        <IconButton label="Новий розрахунок" to="/calculate?new=1" tone="accent">
-          <Plus size={22} strokeWidth={2.6} />
-        </IconButton>
+        <>
+          <IconButton label="Новий розрахунок" to="/calculate?new=1" tone="accent">
+            <Plus size={22} strokeWidth={2.6} />
+          </IconButton>
+          <Link to="/settings" className="avatar avatar--sm header-avatar only-mobile" aria-label="Профіль" title="Профіль і налаштування">
+            {initials(profile.fullName)}
+          </Link>
+        </>
       }
     />
   );
