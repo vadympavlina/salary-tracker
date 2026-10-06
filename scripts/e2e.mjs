@@ -22,7 +22,8 @@ const field = (label) => page.getByLabel(label, { exact: true });
 // 1. First launch → demo data
 await page.goto(BASE);
 await page.getByRole('heading', { name: /Привіт, Вадим/ }).waitFor();
-assert.ok(await page.getByText(uah('28 450')).first().isVisible());
+await page.locator(`.hero__amount[aria-label="${uah('8 450')}"]`).waitFor();
+assert.ok(await page.locator('.hero').getByText(uah('28 450')).isVisible());
 step('home with demo data');
 
 // 2. New calculation for November 2026
@@ -37,15 +38,17 @@ await field('Аванс').fill('5000');
 await field('Додаткові').fill('1200');
 assert.equal(await field('Аванс').inputValue(), `5${NB}000`);
 await field('Сума, яка прийшла на картку').fill('10000');
-await page.locator('.live-total b').getByText(uah('16 560')).waitFor();
+await page.locator('.live-total b').getByText(uah('1 560')).waitFor();
+await page.locator('.hand-callout').getByText(uah('1 560')).waitFor();
 step('form input + live total');
 
 // 3. Result
 await page.getByRole('button', { name: 'Розрахувати' }).click();
 await page.getByRole('heading', { name: 'Результат' }).waitFor();
 const breakdown = page.locator('.breakdown');
-for (const v of ['4 200', '11 160', '16 560', '11 560', '1 560']) assert.ok(await breakdown.getByText(uah(v)).first().isVisible(), v);
-assert.ok(await breakdown.getByText('−1' + NB + '560' + NB + '₴').isVisible());
+for (const v of ['4 200', '11 160', '16 560', '1 560']) assert.ok(await breakdown.getByText(uah(v)).first().isVisible(), v);
+assert.ok(await breakdown.getByText('−10' + NB + '000' + NB + '₴').isVisible());
+await page.locator(`.hero__amount[aria-label="${uah('1 560')}"]`).waitFor();
 step('result breakdown');
 
 // 4. Save → details
@@ -68,7 +71,8 @@ await page.getByRole('link', { name: /Листопад 2026/ }).click();
 await page.getByRole('button', { name: 'Редагувати' }).click();
 await page.getByRole('heading', { name: 'Редагування' }).waitFor();
 assert.equal(await field('Перевірені відео').inputValue(), '248');
-await page.getByRole('button', { name: 'Прийшло все' }).click();
+await page.getByRole('button', { name: 'Отримав усе' }).click();
+assert.equal(await field('Отримано на руки').inputValue(), `1${NB}560`);
 await page.getByRole('button', { name: 'Розрахувати' }).click();
 await page.getByRole('button', { name: 'Зберегти' }).click();
 await page.locator('.hero').getByText('Виплачено').waitFor();

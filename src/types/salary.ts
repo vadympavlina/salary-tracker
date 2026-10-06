@@ -21,6 +21,8 @@ export interface SalaryInput {
   additional: number;
   /** Amount that actually arrived on the bank card (excluding the advance). */
   received: number;
+  /** Cash already received "на руки" (the part that doesn't come to the card). */
+  cashReceived: number;
   /** Snapshot of the setting at the time of saving, so history never changes retroactively. */
   advanceMode: AdvanceMode;
   /** Informational tax rate (%), rates are entered net of tax. */
@@ -46,19 +48,17 @@ export interface SalaryCalculation {
   grossIncome: number;
   advance: number;
   additional: number;
-  /** What the user gets in hand for the month ("Сума на руки"). */
-  netIncome: number;
-  /** What should arrive on the card after the advance. */
-  expectedOnCard: number;
   /** Arrived on card. */
   received: number;
-  /** Advance + card. */
+  /** "Сума на руки": what is paid in hand after the advance and the card — earned − advance − card. */
+  netIncome: number;
+  /** Cash already received in hand. */
+  cashReceived: number;
+  /** Advance + card + cash. */
   totalReceived: number;
-  /** What is still owed (never negative). */
+  /** What is still owed (never negative) = на руки − отримано на руки. */
   remaining: number;
-  /** Card amount minus expected on card: >0 overpaid, <0 underpaid. */
-  cardDifference: number;
-  /** Informational: tax withheld on top of netIncome at `taxRate`. */
+  /** Informational: tax withheld on top of grossIncome at `taxRate`. */
   taxEstimate: number;
   status: PaymentStatus;
 }

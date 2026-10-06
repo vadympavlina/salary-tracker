@@ -5,7 +5,7 @@ import { CheckCircle2 } from 'lucide-react';
 
 /** The three questions: how much did I earn, receive, and what's left. */
 export function MoneySummary({ calc }: { calc: SalaryCalculation }) {
-  const progress = calc.netIncome > 0 ? Math.min(1, calc.totalReceived / calc.netIncome) : 1;
+  const progress = calc.grossIncome > 0 ? Math.min(1, calc.totalReceived / calc.grossIncome) : 1;
   const done = calc.remaining <= 0;
   return (
     <section className="money card" aria-label="Підсумок виплат">
@@ -26,7 +26,7 @@ export function MoneySummary({ calc }: { calc: SalaryCalculation }) {
       <div
         className="money__bar"
         role="progressbar"
-        aria-label="Отримано від суми на руки"
+        aria-label="Отримано від нарахованого"
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={Math.round(progress * 100)}
@@ -38,11 +38,10 @@ export function MoneySummary({ calc }: { calc: SalaryCalculation }) {
         {done ? (
           <>
             <CheckCircle2 size={15} aria-hidden="true" /> Усе отримано
-            {calc.cardDifference > 0 && <> · на картку більше на {formatUAH(calc.cardDifference)}</>}
           </>
         ) : (
           <>
-            Отримано {Math.round(progress * 100)}% · ще {formatUAH(calc.remaining)} до виплати
+            Отримано {Math.round(progress * 100)}% · ще {formatUAH(calc.remaining)} на руки
           </>
         )}
       </p>

@@ -18,35 +18,45 @@ const base: SalaryInput = {
   advance: 5000,
   additional: 1200,
   received: 10000,
+  cashReceived: 0,
   advanceMode: 'part',
   taxRate: 9,
 };
 
 describe('calculateSalary', () => {
-  it('advance as part of salary', () => {
+  it('на руки = нараховано − аванс − картка', () => {
     const c = calculateSalary(base);
     expect(c.pairIncome).toBe(4200);
     expect(c.videoIncome).toBe(11160);
     expect(c.grossIncome).toBe(16560);
-    expect(c.netIncome).toBe(16560);
-    expect(c.expectedOnCard).toBe(11560);
+    expect(c.netIncome).toBe(1560);
     expect(c.totalReceived).toBe(15000);
     expect(c.remaining).toBe(1560);
-    expect(c.cardDifference).toBe(-1560);
     expect(c.status).toBe('partial');
+  });
+
+  it('cash in hand closes the month', () => {
+    const c = calculateSalary({ ...base, cashReceived: 1000 });
+    expect(c.remaining).toBe(560);
+    expect(c.status).toBe('partial');
+    const paid = calculateSalary({ ...base, cashReceived: 1560 });
+    expect(paid.remaining).toBe(0);
+    expect(paid.status).toBe('paid');
   });
 
   it('advance as extra income', () => {
     const c = calculateSalary({ ...base, advanceMode: 'extra' });
     expect(c.grossIncome).toBe(21560);
-    expect(c.expectedOnCard).toBe(16560);
+    expect(c.netIncome).toBe(6560);
     expect(c.remaining).toBe(6560);
   });
 
-  it('statuses', () => {
+  it('statuses and overpayment', () => {
     expect(calculateSalary({ ...base, advance: 0, received: 0 }).status).toBe('pending');
-    expect(calculateSalary({ ...base, received: 11560 }).status).toBe('paid');
-    expect(calculateSalary({ ...base, received: 20000 }).remaining).toBe(0);
+    const over = calculateSalary({ ...base, received: 20000 });
+    expect(over.netIncome).toBe(0);
+    expect(over.remaining).toBe(0);
+    expect(over.status).toBe('paid');
     expect(getPaymentStatus(0, 0)).toBe('paid');
   });
 
@@ -57,7 +67,7 @@ describe('calculateSalary', () => {
 
   it('tax is informational', () => {
     const c = calculateSalary({ ...base, taxRate: 9 });
-    expect(c.netIncome).toBe(16560);
+    expect(c.grossIncome).toBe(16560);
     expect(c.taxEstimate).toBeCloseTo((16560 * 9) / 91, 1);
   });
 
@@ -67,8 +77,8 @@ describe('calculateSalary', () => {
   });
 
   it('demo data matches spec amounts', () => {
-    const nets = DEMO_INPUTS.map((i) => calculateSalary(i).netIncome);
-    expect(nets).toEqual([18420, 20850, 22110, 24320, 26780, 28450]);
+    const gross = DEMO_INPUTS.map((i) => calculateSalary(i).grossIncome);
+    expect(gross).toEqual([18420, 20850, 22110, 24320, 26780, 28450]);
     expect(calculateSalary(DEMO_INPUTS[3]).status).toBe('pending');
     expect(calculateSalary(DEMO_INPUTS[5]).status).toBe('paid');
   });
@@ -79,7 +89,7 @@ describe('analytics', () => {
     const recs = DEMO_INPUTS.map((i, n) => ({ ...i, id: String(n), createdAt: '', updatedAt: '', status: 'paid' as const }));
     const pts = buildMonthlySeries(recs, 3);
     expect(pts.map((p) => p.period)).toEqual(['2026-08', '2026-09', '2026-10']);
-    const s = seriesStats(pts, (p) => p.net);
+    const s = seriesStats(pts, (p) => p.gross);
     expect(s.max).toBe(28450);
     expect(s.maxPeriod).toBe('2026-10');
     const total = incomeStructure(pts).reduce((a, b) => a + b.percent, 0);
@@ -126,6 +136,22 @@ function memoryAdapter(): StorageAdapter {
 }
 
 describe('storage', () => {
+  it('refreshes v1 demo data but keeps user data', async () => {
+    const a = memoryAdapter();
+    await a.set('salary_meta', { schemaVersion: 1, seeded: true });
+    await a.set('salary_records', [{ period: '2026-10', pairs: 1, pairRate: 1, isDemo: true }]);
+    const data = await createSalaryStorage(a).load();
+    expect(data.records).toHaveLength(6);
+    expect(data.records[0].cashReceived).toBe(8450);
+
+    const b = memoryAdapter();
+    await b.set('salary_meta', { schemaVersion: 1, seeded: true });
+    await b.set('salary_records', [{ period: '2026-10', pairs: 1, pairRate: 1 }]);
+    const mine = await createSalaryStorage(b).load();
+    expect(mine.records).toHaveLength(1);
+    expect(mine.records[0].cashReceived).toBe(0);
+  });
+
   it('seeds demo once and round-trips export/import', async () => {
     const storage = createSalaryStorage(memoryAdapter());
     const first = await storage.load();
@@ -133,6 +159,7 @@ describe('storage', () => {
     expect(first.records[0].period).toBe('2026-10');
     expect(first.records.every((r) => r.isDemo)).toBe(true);
     await storage.saveRecords([]);
+    expect((await storage.load()).records).toHaveLength(0); // still no re-seed after load
     expect((await storage.load()).records).toHaveLength(0); // no re-seed
 
     const json = JSON.stringify(buildExport(first));

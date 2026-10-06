@@ -11,7 +11,7 @@ export const STORAGE_KEYS = {
   meta: 'salary_meta',
 } as const;
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 interface Meta {
   schemaVersion: number;
@@ -64,6 +64,7 @@ export function normalizeRecord(raw: unknown): SalaryRecord | null {
     advance: num(r.advance),
     additional: num(r.additional),
     received: num(r.received),
+    cashReceived: num(r.cashReceived),
     advanceMode: r.advanceMode === 'extra' ? 'extra' : 'part',
     taxRate: Math.min(num(r.taxRate, DEFAULT_SETTINGS.taxRate), 99),
     note: typeof r.note === 'string' ? r.note.slice(0, 500) : undefined,
@@ -112,6 +113,13 @@ export function createSalaryStorage(adapter: StorageAdapter = new LocalStorageAd
   return {
     async load(): Promise<AppData> {
       const meta = await adapter.get<Meta>(STORAGE_KEYS.meta);
+      // v1 demo rows predate the "на руки" field — refresh them if the user only has demo data.
+      if (meta?.seeded && meta.schemaVersion < SCHEMA_VERSION) {
+        const existing = await adapter.get<{ isDemo?: boolean }[]>(STORAGE_KEYS.records);
+        const onlyDemo = Array.isArray(existing) && existing.length > 0 && existing.every((r) => r?.isDemo);
+        if (onlyDemo) await writeRecords(DEMO_INPUTS.map((i) => ({ ...buildRecord(i), isDemo: true })));
+        await adapter.set<Meta>(STORAGE_KEYS.meta, { schemaVersion: SCHEMA_VERSION, seeded: true });
+      }
       if (!meta?.seeded) {
         // First launch: seed demo data so the app doesn't look empty.
         const records = DEMO_INPUTS.map((i) => ({ ...buildRecord(i), isDemo: true }));

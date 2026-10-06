@@ -53,7 +53,7 @@ export function HomePage() {
 
   const calc = calculateSalary(latest);
   const prev = findByPeriod(shiftPeriod(latest.period, -1));
-  const change = percentChange(calc.netIncome, prev ? calculateSalary(prev).netIncome : undefined);
+  const change = percentChange(calc.grossIncome, prev ? calculateSalary(prev).grossIncome : undefined);
 
   return (
     <>

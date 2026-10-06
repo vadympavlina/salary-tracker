@@ -26,7 +26,7 @@ export function ResultPage() {
   const { input, editId } = draft;
   const calc = calculateSalary(input);
   const prev = findByPeriod(shiftPeriod(input.period, -1));
-  const change = percentChange(calc.netIncome, prev ? calculateSalary(prev).netIncome : undefined);
+  const change = percentChange(calc.grossIncome, prev ? calculateSalary(prev).grossIncome : undefined);
   const backTo = editId ? `/calculate?edit=${editId}` : '/calculate';
 
   const save = async () => {

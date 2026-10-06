@@ -20,6 +20,7 @@ interface FormState {
   advance: string;
   additional: string;
   received: string;
+  cashReceived: string;
 }
 
 const toForm = (i: SalaryInput): FormState => ({
@@ -31,6 +32,7 @@ const toForm = (i: SalaryInput): FormState => ({
   advance: fromNumber(i.advance),
   additional: fromNumber(i.additional),
   received: fromNumber(i.received),
+  cashReceived: fromNumber(i.cashReceived),
 });
 
 const blankForm = (s: SalarySettings, period: string): FormState => ({
@@ -42,6 +44,7 @@ const blankForm = (s: SalarySettings, period: string): FormState => ({
   advance: fromNumber(s.defaultAdvance),
   additional: '',
   received: '',
+  cashReceived: '',
 });
 
 const LIMITS = { pairs: 500, videos: 20_000, rate: 1_000_000, money: 10_000_000 };
@@ -79,6 +82,7 @@ export function CalculatePage() {
       advance: toNumber(form.advance),
       additional: toNumber(form.additional),
       received: toNumber(form.received),
+      cashReceived: toNumber(form.cashReceived),
       advanceMode: editing?.advanceMode ?? settings.advanceMode,
       taxRate: editing?.taxRate ?? settings.taxRate,
     }),
@@ -114,7 +118,8 @@ export function CalculatePage() {
     navigate('/calculate/result');
   };
 
-  const fillReceived = () => set('received')(fromNumber(calc.expectedOnCard));
+  const fillCash = () => set('cashReceived')(fromNumber(calc.netIncome));
+  const overpaid = calc.grossIncome > 0 && calc.advance + calc.received > calc.grossIncome;
   const rateDiff = (v: number, def: number) => (v !== def && def > 0 ? `За замовчуванням ${formatUAH(def)}` : undefined);
   const lastRecord = records[0];
 
@@ -219,16 +224,35 @@ export function CalculatePage() {
               onChange={set('received')}
               icon={<CreditCard size={20} />}
               max={LIMITS.money}
+              hint={overpaid ? 'Аванс і картка більші за нараховане — перевір суми' : 'Віднімається від суми на руки'}
+            />
+            <div className="hand-callout" aria-live="polite">
+              <span>
+                <small>Сума на руки</small>
+                <b className="num">{formatUAH(calc.netIncome)}</b>
+              </span>
+              <span className="hand-callout__formula num">
+                {formatUAH(calc.grossIncome)} − {formatUAH(calc.advance)} − {formatUAH(calc.received)}
+              </span>
+            </div>
+            <CurrencyInput
+              label="Отримано на руки"
+              value={form.cashReceived}
+              onChange={set('cashReceived')}
+              icon={<HandCoins size={20} />}
+              max={LIMITS.money}
               hint={
-                calc.expectedOnCard > 0 ? (
-                  <>
-                    Має прийти: <b className="num">{formatUAH(calc.expectedOnCard)}</b>
-                    {input.received !== calc.expectedOnCard && (
-                      <button type="button" className="chip" onClick={fillReceived}>
-                        Прийшло все
+                calc.netIncome > 0 ? (
+                  input.cashReceived >= calc.netIncome ? (
+                    'Усе отримано'
+                  ) : (
+                    <>
+                      Залишилось: <b className="num">{formatUAH(calc.remaining)}</b>
+                      <button type="button" className="chip" onClick={fillCash}>
+                        Отримав усе
                       </button>
-                    )}
-                  </>
+                    </>
+                  )
                 ) : undefined
               }
             />
@@ -260,8 +284,11 @@ export function CalculatePage() {
             <div className="live-total" aria-live="polite">
               <span>На руки</span>
               <b className="num">{formatUAH(calc.netIncome)}</b>
-              {calc.netIncome > 0 && (
-                <small className="num">{calc.remaining > 0 ? `ще отримати ${formatUAH(calc.remaining)}` : 'усе отримано'}</small>
+              {calc.grossIncome > 0 && (
+                <small className="num">
+                  нараховано {formatUAH(calc.grossIncome)}
+                  {calc.remaining > 0 ? ` · ще ${formatUAH(calc.remaining)}` : ' · усе отримано'}
+                </small>
               )}
             </div>
             <Button type="submit" disabled={touched && (hasErrors || isEmpty)}>

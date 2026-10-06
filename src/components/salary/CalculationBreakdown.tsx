@@ -56,27 +56,22 @@ export function CalculationBreakdown({ input, calc }: { input: SalaryInput; calc
       <Group title="Загальна сума">
         <Row label="Всього нараховано" value={formatUAH(calc.grossIncome)} strong />
         {input.taxRate > 0 && (
-          <Row label={`Податки (${formatNumber(input.taxRate, true)}%)`} sub="вже утримано, довідково" value={`≈ ${formatUAH(calc.taxEstimate)}`} tone="muted" />
+          <Row label={`Податки (${formatNumber(input.taxRate, true)}%)`} sub="вже утримано, довідково" value={`≈ ${formatUAH(Math.round(calc.taxEstimate))}`} tone="muted" />
         )}
-        <div className="bd-total">
-          <dt>Сума на руки</dt>
-          <dd className="num">{formatUAH(calc.netIncome)}</dd>
-        </div>
       </Group>
 
       <Group title="Виплата">
-        {calc.advance > 0 && <Row label="Аванс отримано" value={formatUAH(calc.advance)} />}
-        <Row label="Має прийти на картку" value={formatUAH(calc.expectedOnCard)} />
-        <Row label="Прийшло на картку" value={formatUAH(calc.received)} />
-        {calc.received > 0 && calc.cardDifference !== 0 && (
-          <Row label="Різниця" value={formatUAH(calc.cardDifference, { sign: true })} tone={calc.cardDifference > 0 ? 'green' : 'red'} />
-        )}
-        <Row
-          label="Залишилось отримати"
-          value={formatUAH(calc.remaining)}
-          strong
-          tone={calc.remaining > 0 ? 'orange' : 'green'}
-        />
+        <Row label="Аванс" value={formatUAH(-calc.advance)} tone={calc.advance > 0 ? 'muted' : undefined} />
+        <Row label="Прийшло на картку" value={formatUAH(-calc.received)} tone={calc.received > 0 ? 'muted' : undefined} />
+        <div className="bd-total">
+          <dt>
+            Сума на руки
+            <small>нараховано − аванс − картка</small>
+          </dt>
+          <dd className="num">{formatUAH(calc.netIncome)}</dd>
+        </div>
+        <Row label="Отримано на руки" value={formatUAH(calc.cashReceived)} tone={calc.cashReceived > 0 ? 'green' : undefined} />
+        <Row label="Залишилось отримати" value={formatUAH(calc.remaining)} strong tone={calc.remaining > 0 ? 'orange' : 'green'} />
       </Group>
     </div>
   );

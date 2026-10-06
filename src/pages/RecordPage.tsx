@@ -34,7 +34,7 @@ export function RecordPage({ id }: { id: string }) {
 
   const calc = calculateSalary(record);
   const prev = findByPeriod(shiftPeriod(record.period, -1));
-  const change = percentChange(calc.netIncome, prev ? calculateSalary(prev).netIncome : undefined);
+  const change = percentChange(calc.grossIncome, prev ? calculateSalary(prev).grossIncome : undefined);
   const title = formatPeriod(record.period);
 
   const edit = () => {
@@ -58,7 +58,8 @@ export function RecordPage({ id }: { id: string }) {
       `Відео: ${formatNumber(record.videos)} × ${formatUAH(record.videoRate)} = ${formatUAH(calc.videoIncome)}`,
       `Аванс: ${formatUAH(calc.advance)} · Додаткові: ${formatUAH(calc.additional)}`,
       `Всього нараховано: ${formatUAH(calc.grossIncome)}`,
-      `Отримано: ${formatUAH(calc.totalReceived)} · Залишилось: ${formatUAH(calc.remaining)}`,
+      `На картку: ${formatUAH(calc.received)} · На руки: ${formatUAH(calc.netIncome)}`,
+      `Отримано на руки: ${formatUAH(calc.cashReceived)} · Залишилось: ${formatUAH(calc.remaining)}`,
       `Статус: ${STATUS_LABEL[calc.status]}`,
     ].join('\n');
     try {

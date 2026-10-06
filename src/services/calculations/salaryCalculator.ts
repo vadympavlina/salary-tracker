@@ -3,18 +3,19 @@ import type { PaymentStatus, SalaryCalculation, SalaryInput } from '../../types/
 const round2 = (n: number) => Math.round(n * 100) / 100;
 const safe = (n: number) => (Number.isFinite(n) && n > 0 ? n : 0);
 
-/** Payment status from what should be received vs. what actually was. */
-export function getPaymentStatus(netIncome: number, totalReceived: number): PaymentStatus {
-  if (totalReceived <= 0) return netIncome <= 0 ? 'paid' : 'pending';
-  return totalReceived >= netIncome ? 'paid' : 'partial';
+/** Payment status: everything earned received → paid; something received → partial; nothing → pending. */
+export function getPaymentStatus(grossIncome: number, totalReceived: number): PaymentStatus {
+  if (totalReceived <= 0) return grossIncome <= 0 ? 'paid' : 'pending';
+  return totalReceived >= grossIncome ? 'paid' : 'partial';
 }
 
 /**
  * Pure salary calculation. No UI, no storage — safe to reuse anywhere (and on a server later).
  *
- * part  mode: earned = pairs + videos + additional;            received = advance + card
- * extra mode: earned = pairs + videos + additional + advance;  received = advance + card
- * remaining = earned − received
+ * earned    = pairs + videos + additional (+ advance in `extra` mode)
+ * на руки   = earned − advance − card
+ * received  = advance + card + cash in hand
+ * remaining = на руки − cash in hand
  */
 export function calculateSalary(input: SalaryInput): SalaryCalculation {
   const pairIncome = round2(safe(input.pairs) * safe(input.pairRate));
@@ -22,17 +23,16 @@ export function calculateSalary(input: SalaryInput): SalaryCalculation {
   const advance = safe(input.advance);
   const additional = safe(input.additional);
   const received = safe(input.received);
+  const cashReceived = safe(input.cashReceived);
 
   const extraIncome = round2(additional + (input.advanceMode === 'extra' ? advance : 0));
   const grossIncome = round2(pairIncome + videoIncome + extraIncome);
-  const netIncome = grossIncome;
-  const expectedOnCard = round2(Math.max(0, netIncome - advance));
-  const totalReceived = round2(advance + received);
-  const remaining = round2(Math.max(0, netIncome - totalReceived));
-  const cardDifference = round2(received - expectedOnCard);
+  const netIncome = round2(Math.max(0, grossIncome - advance - received));
+  const totalReceived = round2(advance + received + cashReceived);
+  const remaining = round2(Math.max(0, netIncome - cashReceived));
 
   const taxRate = Math.min(Math.max(safe(input.taxRate), 0), 99);
-  const taxEstimate = round2((netIncome * taxRate) / (100 - taxRate));
+  const taxEstimate = round2((grossIncome * taxRate) / (100 - taxRate));
 
   return {
     pairIncome,
@@ -41,14 +41,13 @@ export function calculateSalary(input: SalaryInput): SalaryCalculation {
     grossIncome,
     advance,
     additional,
-    netIncome,
-    expectedOnCard,
     received,
+    netIncome,
+    cashReceived,
     totalReceived,
     remaining,
-    cardDifference,
     taxEstimate,
-    status: getPaymentStatus(netIncome, totalReceived),
+    status: getPaymentStatus(grossIncome, totalReceived),
   };
 }
 

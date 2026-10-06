@@ -87,18 +87,19 @@ export function AnalyticsPage() {
 }
 
 function IncomeTab({ points, last, prev }: { points: MonthPoint[]; last: MonthPoint; prev?: MonthPoint }) {
-  const stats = seriesStats(points, (p) => p.net);
+  const stats = seriesStats(points, (p) => p.gross);
+  const hand = seriesStats(points, (p) => p.net);
   const structure = incomeStructure(points);
   return (
     <>
-      <ChartCard title="Динаміка доходу" subtitle="Сума на руки за місяць">
-        <BarChart data={toBars(points, (p) => p.net)} format={formatUAH} axisFormat={formatCompact} ariaLabel="Сума на руки по місяцях" />
+      <ChartCard title="Динаміка доходу" subtitle="Всього нараховано за місяць">
+        <BarChart data={toBars(points, (p) => p.gross)} format={formatUAH} axisFormat={formatCompact} ariaLabel="Нараховано по місяцях" />
       </ChartCard>
       <div className="stats-grid">
-        <StatCard label="Середня сума" value={formatUAH(Math.round(stats.average))} hint="за місяць" />
+        <StatCard label="Середня сума" value={formatUAH(Math.round(stats.average))} hint="нараховано за місяць" />
         <StatCard label="Найбільша сума" value={formatUAH(stats.max)} hint={stats.maxPeriod ? formatPeriod(stats.maxPeriod) : undefined} />
-        <StatCard label="Останній місяць" value={formatUAH(last.net)} hint={<ChangeBadge value={percentChange(last.net, prev?.net)} />} />
-        <StatCard label="Разом за період" value={formatUAH(stats.total)} hint={`${points.length} ${plural(points.length, ['місяць', 'місяці', 'місяців'])}`} />
+        <StatCard label="Останній місяць" value={formatUAH(last.gross)} hint={<ChangeBadge value={percentChange(last.gross, prev?.gross)} />} />
+        <StatCard label="Разом за період" value={formatUAH(stats.total)} hint={`на руки ${formatUAH(hand.total)}`} />
       </div>
       {structure.length > 0 && (
         <ChartCard title="Структура доходу" subtitle="Звідки гроші за обраний період">

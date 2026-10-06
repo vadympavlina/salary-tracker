@@ -3,6 +3,9 @@ import { calculateSalary } from './salaryCalculator';
 
 export interface MonthPoint {
   period: string;
+  /** Earned ("Всього нараховано"). */
+  gross: number;
+  /** "На руки". */
   net: number;
   pairs: number;
   videos: number;
@@ -27,6 +30,7 @@ export function buildMonthlySeries(records: SalaryRecord[], limit = 12): MonthPo
       const c = calculateSalary(r);
       return {
         period: r.period,
+        gross: c.grossIncome,
         net: c.netIncome,
         pairs: r.pairs,
         videos: r.videos,
