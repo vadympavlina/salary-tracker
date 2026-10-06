@@ -18,13 +18,13 @@
 .btn--md { height: 46px; padding: 0 18px; font-size: 15px; border-radius: 14px; }
 .btn--sm { height: 36px; padding: 0 14px; font-size: 14px; border-radius: 11px; }
 .btn--block { width: 100%; }
-.btn--primary { background: var(--accent); color: #fff; box-shadow: var(--shadow-accent); }
-.btn--primary:hover:not(:disabled) { background: var(--accent-strong); }
+.btn--primary { background: var(--accent-fill); color: #fff; box-shadow: var(--shadow-accent); }
+.btn--primary:hover:not(:disabled) { background: var(--accent-fill-hover); }
 .btn--secondary { background: var(--surface); color: var(--text); box-shadow: inset 0 0 0 1px var(--border-strong), var(--shadow-sm); }
 .btn--secondary:hover:not(:disabled) { background: var(--surface-2); }
-.btn--tinted { background: var(--accent-soft); color: var(--accent); }
-.btn--ghost { background: transparent; color: var(--accent); }
-.btn--danger { background: var(--red-soft); color: var(--red); }
+.btn--tinted { background: var(--accent-soft); color: var(--accent-text); }
+.btn--ghost { background: transparent; color: var(--accent-text); }
+.btn--danger { background: var(--red-soft); color: var(--red-text); }
 .btn--danger.grow { background: var(--red); color: #fff; }
 
 .icon-btn {
@@ -49,7 +49,7 @@
   min-height: 44px;
   margin: -12px -8px;
   padding: 12px 8px;
-  color: var(--accent);
+  color: var(--accent-text);
   font-weight: 600;
   font-size: 14px;
 }
@@ -66,7 +66,7 @@
   border: 0;
   border-radius: var(--r-pill);
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 13px;
   font-weight: 650;
   transition: transform 0.14s var(--ease);
@@ -173,9 +173,9 @@
 .status--pending { background: var(--orange-soft); color: var(--orange); }
 .status--on-dark { background: rgba(255, 255, 255, 0.95); }
 /* The hero is purple in both themes, so its pill keeps the light-theme ink. */
-.status--on-dark.status--paid { color: #138a47; }
+.status--on-dark.status--paid { color: #107a3e; }
 .status--on-dark.status--partial,
-.status--on-dark.status--pending { color: #c2610a; }
+.status--on-dark.status--pending { color: #a8530a; }
 
 /* ================= Money summary ================= */
 .money { padding: 16px 16px 14px; }
@@ -219,7 +219,7 @@
   display: inline-flex; align-items: center; justify-content: center;
   width: 32px; height: 32px; margin-bottom: 4px;
   border-radius: 10px;
-  background: var(--accent-soft); color: var(--accent);
+  background: var(--accent-soft); color: var(--accent-text);
 }
 .stat__label { font-size: 12.5px; color: var(--text-2); font-weight: 550; }
 .stat__value { font-size: 21px; font-weight: 750; letter-spacing: -0.025em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -258,7 +258,7 @@
 .history-item__icon {
   display: inline-flex; align-items: center; justify-content: center;
   width: 40px; height: 40px; border-radius: 12px;
-  background: var(--accent-soft); color: var(--accent);
+  background: var(--accent-soft); color: var(--accent-text);
 }
 .history-item__main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .history-item__title { font-weight: 650; font-size: 15.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -355,7 +355,7 @@
   background: var(--surface-2); color: var(--text-2);
   box-shadow: inset 0 0 0 1px var(--border);
 }
-.field__box:focus-within .field__icon { background: var(--accent-soft); color: var(--accent); box-shadow: none; }
+.field__box:focus-within .field__icon { background: var(--accent-soft); color: var(--accent-text); box-shadow: none; }
 .field__main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .field__label { font-size: 12.5px; font-weight: 600; color: var(--text-2); cursor: text; }
 .field__value-row { display: flex; align-items: baseline; gap: 6px; }
@@ -388,7 +388,7 @@
   display: inline-flex; align-items: center; justify-content: center;
   width: 46px; height: 46px;
   border: 0; border-radius: 14px;
-  background: var(--accent-soft); color: var(--accent);
+  background: var(--accent-soft); color: var(--accent-text);
   touch-action: manipulation;
   transition: transform 0.12s var(--ease), background-color 0.15s;
 }
@@ -433,7 +433,7 @@
 .counter__icon {
   display: inline-flex; align-items: center; justify-content: center;
   width: 40px; height: 40px; border-radius: 12px;
-  background: var(--accent-soft); color: var(--accent);
+  background: var(--accent-soft); color: var(--accent-text);
 }
 .counter__label { flex: 1; font-size: 15.5px; font-weight: 600; }
 .counter__value { min-width: 52px; text-align: right; font-size: 24px; font-weight: 760; letter-spacing: -0.02em; margin-right: 6px; }
@@ -446,7 +446,7 @@
   touch-action: manipulation;
   transition: transform 0.12s var(--ease), background-color 0.15s;
 }
-.counter__btn--plus { width: 56px; background: var(--accent); color: #fff; box-shadow: var(--shadow-accent); }
+.counter__btn--plus { width: 56px; background: var(--accent-fill); color: #fff; box-shadow: var(--shadow-accent); }
 .counter__btn:active:not(:disabled) { transform: scale(0.9); }
 .counter__btn:disabled { opacity: 0.4; }
 .counter__total { margin-top: 6px; font-size: 13.5px; color: var(--text-2); }
@@ -469,7 +469,7 @@
   align-self: flex-start;
   min-height: 44px; padding: 0 14px;
   border: 1px dashed var(--border-strong); border-radius: 14px;
-  background: transparent; color: var(--accent);
+  background: transparent; color: var(--accent-text);
   font-size: 14px; font-weight: 650;
   transition: background-color 0.15s;
 }
@@ -478,7 +478,7 @@
 
 /* Note */
 .note { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; }
-.note svg { flex-shrink: 0; color: var(--accent); margin-top: 2px; }
+.note svg { flex-shrink: 0; color: var(--accent-text); margin-top: 2px; }
 .note p { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text); font-size: 15px; }
 
 /* "На руки" callout inside the form */
@@ -492,7 +492,7 @@
 .hand-callout span:first-child { display: flex; justify-content: space-between; align-items: baseline; }
 .hand-callout small { font-size: 13.5px; font-weight: 650; }
 .hand-callout b { font-size: 22px; font-weight: 780; letter-spacing: -0.02em; }
-.hand-callout__formula { font-size: 12.5px; opacity: 0.75; }
+.hand-callout__formula { font-size: 12.5px; color: var(--accent-text); }
 
 /* Notice */
 .notice {
@@ -503,6 +503,7 @@
 }
 .notice svg { flex-shrink: 0; margin-top: 1px; }
 .notice--warn { background: var(--orange-soft); color: var(--orange-text); }
+.notice--info { background: var(--accent-soft); color: var(--accent-strong); }
 .notice--success { background: var(--green-soft); color: var(--green-text); margin-bottom: 14px; align-items: center; }
 .notice--success b { display: block; font-size: 15px; }
 .notice--success small { font-size: 13px; opacity: 0.8; }
@@ -532,7 +533,7 @@
   font-weight: 700;
 }
 .bd-total dt { display: flex; flex-direction: column; }
-.bd-total dt small { font-size: 12px; font-weight: 550; opacity: 0.75; }
+.bd-total dt small { font-size: 12px; font-weight: 550; }
 .bd-total dd { margin: 0; font-size: 19px; font-weight: 780; letter-spacing: -0.02em; }
 .tone-green { color: var(--green); }
 .tone-red { color: var(--red); }
@@ -618,7 +619,7 @@
   display: inline-flex; align-items: center; justify-content: center;
   width: 72px; height: 72px; margin-bottom: 18px;
   border-radius: 24px;
-  background: var(--accent-soft); color: var(--accent);
+  background: var(--accent-soft); color: var(--accent-text);
 }
 .empty__title { font-size: 20px; font-weight: 720; letter-spacing: -0.02em; }
 .empty__text { margin-top: 6px; color: var(--text-2); max-width: 300px; }
@@ -652,7 +653,7 @@
 .row__icon {
   display: inline-flex; align-items: center; justify-content: center;
   width: 36px; height: 36px; border-radius: 11px;
-  background: var(--accent-soft); color: var(--accent);
+  background: var(--accent-soft); color: var(--accent-text);
 }
 .row__label { flex: 1; font-size: 15.5px; font-weight: 550; }
 .row__value { color: var(--text-2); font-size: 15px; font-weight: 550; }
@@ -759,3 +760,9 @@ html.modal-open { overflow: hidden; }
   .counter__icon { display: none; }
   .counter__value { min-width: 40px; }
 }
+
+/* ================= Crash screen ================= */
+.crash { max-width: 440px; margin: 0 auto; padding: calc(var(--safe-t) + 80px) 24px 40px; text-align: center; }
+.crash h1 { font-size: 26px; letter-spacing: -0.02em; }
+.crash p { margin-top: 10px; color: var(--text-2); }
+.crash__actions { display: flex; flex-direction: column; gap: 10px; margin-top: 28px; }

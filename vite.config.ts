@@ -1,6 +1,6 @@
 /// <reference types="vitest/config" />
 import { defineConfig, type Plugin } from 'vite';
-import react from '@vitejs/plugin-react';
+import preact from '@preact/preset-vite';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
@@ -61,7 +61,9 @@ function pagesAndServiceWorker(): Plugin {
 
 export default defineConfig({
   base,
-  plugins: [react(), pagesAndServiceWorker()],
+  // Preact with its React-compatible layer (aliases react → preact/compat): the same
+  // components ship ~60 KB less JavaScript (gzip) than React.
+  plugins: [preact(), pagesAndServiceWorker()],
   define: {
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version ?? '1.0.0'),
   },

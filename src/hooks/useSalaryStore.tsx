@@ -65,6 +65,16 @@ export function SalaryProvider({ children }: { children: ReactNode }) {
       setData(d);
       setReady(true);
     });
+    // Another tab / the installed app changed the data → pick it up here too.
+    const onStorage = (e: StorageEvent) => {
+      if (e.key && !e.key.startsWith('salary_')) return;
+      salaryStorage.load().then((d) => {
+        ref.current = d;
+        setData(d);
+      });
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }, []);
 
   const setDraft = useCallback((d: Draft | null) => {

@@ -21,6 +21,11 @@ test('month counter: +1 / −1 on the home screen, survives reload', async ({ pa
   await page.reload();
   await expect(page.locator('.counter .counter__value').nth(0)).toContainText(String(startPairs + 3));
   await expect(page.locator('.counter .counter__value').nth(1)).toContainText(String(startVideos + 4));
+
+  // "Новий розрахунок" for this month continues from the counted values instead of wiping them.
+  await page.getByRole('link', { name: 'Новий розрахунок' }).first().click();
+  await expect(page.getByLabel('Кількість пар', { exact: true })).toHaveValue(String(startPairs + 3));
+  await expect(page.getByLabel('Перевірені відео', { exact: true })).toHaveValue(String(startVideos + 4));
   assertNoErrors();
 });
 

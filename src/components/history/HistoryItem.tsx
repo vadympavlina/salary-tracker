@@ -10,7 +10,7 @@ export function HistoryItem({ record }: { record: SalaryRecord }) {
   const calc = calculateSalary(record);
   return (
     <li>
-      <Link to={`/history/${record.id}`} className="history-item" aria-label={`${formatPeriod(record.period)}: на руки ${formatUAH(calc.netIncome)}, нараховано ${formatUAH(calc.grossIncome)}`}>
+      <Link to={`/history/${record.id}`} className="history-item">
         <span className={`history-item__icon history-item__icon--${calc.status}`} aria-hidden="true">
           <CalendarDays size={20} />
         </span>
@@ -22,8 +22,14 @@ export function HistoryItem({ record }: { record: SalaryRecord }) {
           </span>
         </span>
         <span className="history-item__side">
-          <span className="history-item__amount num">{formatUAH(calc.netIncome)}</span>
-          <span className="history-item__gross num">з {formatUAH(calc.grossIncome)}</span>
+          <span className="history-item__amount num">
+            <span className="sr-only">на руки </span>
+            {formatUAH(calc.netIncome)}
+          </span>
+          <span className="history-item__gross num">
+            з <span className="sr-only">нарахованих </span>
+            {formatUAH(calc.grossIncome)}
+          </span>
         </span>
         <ChevronRight className="history-item__chevron" size={18} aria-hidden="true" />
       </Link>

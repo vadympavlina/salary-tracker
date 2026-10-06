@@ -45,7 +45,7 @@ export function SalaryCard({ record, calc, change, to }: Props) {
   );
   if (to) {
     return (
-      <Link to={to} className="hero hero--link" aria-label={`Деталі: ${formatPeriod(record.period)}, на руки ${formatUAH(calc.netIncome)}`}>
+      <Link to={to} className="hero hero--link">
         {body}
       </Link>
     );

@@ -8,7 +8,7 @@ test('full flow: create → calculate → save → history → edit → delete �
   // 1. First launch → demo data
   await page.goto('./');
   await expect(page.getByRole('heading', { name: /Привіт, Вадим/ })).toBeVisible();
-  await expect(page.locator(`.hero__amount[aria-label="${uah('8 450')}"]`)).toBeVisible();
+  await expect(page.locator(`.hero__amount[data-value="${uah('8 450')}"]`)).toBeVisible();
 
   // 2. New calculation for November 2026
   await page.getByRole('link', { name: 'Новий розрахунок' }).first().click();
@@ -101,9 +101,14 @@ test('full flow: create → calculate → save → history → edit → delete �
   await page.goto('history');
   await expect(page.locator('.history-item')).toHaveCount(6);
 
-  // 11. New calculation picks up the new default rate
+  // 11. A month without data starts from the new default rate…
   await page.goto('calculate?new=1');
+  await page.getByRole('button', { name: 'Наступний місяць' }).click();
   await expect(field(page, 'Ставка за пару')).toHaveValue('400');
+  // …while a month that already has data opens filled in (never wiped by "new").
+  await page.getByRole('button', { name: 'Попередній місяць' }).click();
+  await expect(page.getByText(/вже є дані/)).toBeVisible();
+  await expect(field(page, 'Ставка за пару')).toHaveValue('350');
 
   assertNoErrors();
 });

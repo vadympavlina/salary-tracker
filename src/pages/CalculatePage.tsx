@@ -54,23 +54,44 @@ export function CalculatePage() {
   const { query, navigate } = useRouter();
   const editId = query.get('edit') ?? undefined;
   const isNew = query.get('new') === '1';
+  // Opened from a record's "Редагувати": shows a back button to that record.
   const editing: SalaryRecord | undefined = editId ? getRecord(editId) : undefined;
 
-  const [form, setForm] = useState<FormState>(() => {
-    if (editing) return draft?.editId === editing.id ? toForm(draft.input) : toForm(editing);
-    if (!isNew && draft && !draft.editId) return toForm(draft.input);
-    return blankForm(settings, currentPeriod());
+  /**
+   * One record per month: the form always shows the selected month. If the month already
+   * has data (from the counter or an earlier calculation) it opens filled in and saving updates it,
+   * so nothing typed or counted earlier is ever wiped.
+   */
+  const monthForm = (period: string): { form: FormState; baseId?: string } => {
+    const rec = findByPeriod(period);
+    return rec ? { form: toForm(rec), baseId: rec.id } : { form: blankForm(settings, period) };
+  };
+
+  const [state, setState] = useState<{ form: FormState; baseId?: string }>(() => {
+    if (editing) return { form: draft?.editId === editing.id ? toForm(draft.input) : toForm(editing), baseId: editing.id };
+    if (!isNew && draft) return { form: toForm(draft.input), baseId: draft.editId };
+    return monthForm(currentPeriod());
   });
+  const { form, baseId } = state;
+  const base = baseId ? getRecord(baseId) : undefined;
+  const setForm = (update: (f: FormState) => FormState) => setState((s) => ({ ...s, form: update(s.form) }));
   const [touched, setTouched] = useState(false);
 
-  // "?new=1" is a one-shot instruction: start blank, then drop it from the URL so a refresh keeps the draft.
+  const goToPeriod = (period: string) => {
+    setState(monthForm(period));
+    setTouched(false);
+  };
+
+  // "?new=1" is a one-shot instruction: open the current month fresh, then drop it from the URL
+  // so a refresh keeps the draft.
   useEffect(() => {
     if (!isNew) return;
-    setForm(blankForm(settings, currentPeriod()));
+    setState(monthForm(currentPeriod()));
     setTouched(false);
     setDraft(null);
     navigate('/calculate', { replace: true });
-  }, [isNew, settings, setDraft, navigate]);
+    // Runs only when the "?new=1" flag appears; the other values are read fresh at that moment.
+  }, [isNew]);
 
   const input: SalaryInput = useMemo(
     () => ({
@@ -81,23 +102,21 @@ export function CalculatePage() {
       additional: toNumber(form.additional),
       received: toNumber(form.received),
       cashReceived: toNumber(form.cashReceived),
-      advanceMode: editing?.advanceMode ?? settings.advanceMode,
+      advanceMode: base?.advanceMode ?? settings.advanceMode,
       note: form.note.trim() || undefined,
     }),
-    [form, editing, settings.advanceMode],
+    [form, base, settings.advanceMode],
   );
   const calc = useMemo(() => calculateSalary(input), [input]);
 
   // Persist the work-in-progress so switching tabs or refreshing never loses typed data.
   useEffect(() => {
-    const t = window.setTimeout(() => setDraft({ input, editId: editing?.id }), 250);
+    const t = window.setTimeout(() => setDraft({ input, editId: baseId }), 250);
     return () => window.clearTimeout(t);
-  }, [input, editing?.id, setDraft]);
+  }, [input, baseId, setDraft]);
 
   const set = (key: TextKey) => (v: string) => setForm((f) => ({ ...f, [key]: v }));
 
-  const conflict = findByPeriod(form.period);
-  const conflictOther = conflict && conflict.id !== editing?.id ? conflict : undefined;
 
   const missingRate = [...input.pairItems, ...input.videoItems].some((l) => l.count > 0 && l.rate <= 0);
   const isEmpty = calc.grossIncome <= 0 && !missingRate;
@@ -108,7 +127,7 @@ export function CalculatePage() {
     e.preventDefault();
     setTouched(true);
     if (isEmpty || missingRate) return;
-    setDraft({ input, editId: editing?.id });
+    setDraft({ input, editId: baseId });
     navigate('/calculate/result');
   };
 
@@ -120,30 +139,36 @@ export function CalculatePage() {
     <form className="calc" onSubmit={submit} noValidate>
       <PageHeader
         title={editing ? 'Редагування' : 'Розрахунок'}
-        subtitle={editing ? `Зміни дані за ${formatPeriod(editing.period).toLowerCase()}` : 'Введи дані для розрахунку зарплати'}
+        subtitle={
+          editing
+            ? `Зміни дані за ${formatPeriod(editing.period).toLowerCase()}`
+            : base
+              ? `Доповни дані за ${formatPeriod(form.period).toLowerCase()}`
+              : 'Введи дані для розрахунку зарплати'
+        }
         backTo={editing ? `/history/${editing.id}` : undefined}
       />
 
       <div className="calc__layout">
         <div className="calc__fields stack">
           <div className="month-picker card">
-            <button type="button" className="month-picker__btn" aria-label="Попередній місяць" onClick={() => set('period')(shiftPeriod(form.period, -1))}>
+            <button type="button" className="month-picker__btn" aria-label="Попередній місяць" onClick={() => goToPeriod(shiftPeriod(form.period, -1))}>
               <ChevronLeft size={20} />
             </button>
             <div className="month-picker__value" aria-live="polite">
               <small>Період</small>
               <b>{formatPeriod(form.period)}</b>
             </div>
-            <button type="button" className="month-picker__btn" aria-label="Наступний місяць" onClick={() => set('period')(shiftPeriod(form.period, 1))}>
+            <button type="button" className="month-picker__btn" aria-label="Наступний місяць" onClick={() => goToPeriod(shiftPeriod(form.period, 1))}>
               <ChevronRight size={20} />
             </button>
           </div>
-          {conflictOther && (
-            <p className="notice notice--warn" role="status">
+          {base && !editing && (
+            <p className="notice notice--info" role="status">
               <Info size={18} aria-hidden="true" />
               <span>
-                За {formatPeriod(form.period).toLowerCase()} вже є розрахунок — збереження його замінить.{' '}
-                <Link to={`/history/${conflictOther.id}`} className="link">
+                За {formatPeriod(form.period).toLowerCase()} вже є дані — доповни їх і збережи.{' '}
+                <Link to={`/history/${base.id}`} className="link">
                   Відкрити
                 </Link>
               </span>
@@ -241,7 +266,7 @@ export function CalculatePage() {
             <TextArea label="Коментар до місяця" value={form.note} onChange={set('note')} icon={<NotebookPen size={20} />} placeholder="Напр.: премія за курс, затримали виплату" />
           </fieldset>
 
-          {!editing && lastRecord && calc.pairs === 0 && calc.videos === 0 && (
+          {!base && lastRecord && lastRecord.period !== form.period && calc.pairs === 0 && calc.videos === 0 && (
             <button
               type="button"
               className="chip chip--block"

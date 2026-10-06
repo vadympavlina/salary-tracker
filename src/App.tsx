@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { matchPath, useRouter } from './router/router';
 import { useSalary } from './hooks/useSalaryStore';
 import { useTheme } from './hooks/useTheme';
+import { useToast } from './components/ui/Toast';
 import { AppLayout } from './layouts/AppLayout';
 import { HomePage } from './pages/HomePage';
 import { CalculatePage } from './pages/CalculatePage';
@@ -25,6 +26,14 @@ export function App() {
   const { path, query } = useRouter();
   const { ready, settings } = useSalary();
   useTheme(settings.theme);
+  const toast = useToast();
+
+  useEffect(() => {
+    const onUpdate = () =>
+      toast('Доступна нова версія', { tone: 'info', duration: 15000, action: { label: 'Оновити', onClick: () => location.reload() } });
+    window.addEventListener('app-updated', onUpdate);
+    return () => window.removeEventListener('app-updated', onUpdate);
+  }, [toast]);
 
   useEffect(() => {
     document.title = `${TITLES[path] ?? (path.startsWith('/history/') ? 'Деталі' : 'Зарплата')} · Зарплата`;

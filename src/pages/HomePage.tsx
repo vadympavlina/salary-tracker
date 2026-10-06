@@ -1,7 +1,7 @@
 import { CirclePlay, Plus, Settings, UsersRound, Wallet, WalletCards } from 'lucide-react';
 import { useSalary } from '../hooks/useSalaryStore';
 import { calculateSalary, percentChange } from '../services/calculations/salaryCalculator';
-import { formatMonthShort, formatPeriod, shiftPeriod } from '../utils/period';
+import { currentPeriod, formatMonthShort, formatPeriod, shiftPeriod } from '../utils/period';
 import { formatCompact, formatNumber, formatUAH } from '../utils/format';
 import { Link } from '../router/router';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -68,11 +68,14 @@ export function HomePage() {
           <SalaryCard record={latest} calc={calc} change={change} to={`/history/${latest.id}`} />
           <MonthCounter />
           <MoneySummary calc={calc} />
-          <div className="stats-row">
-            <StatCard label="Пари" value={formatNumber(calc.pairs)} icon={<UsersRound size={18} />} />
-            <StatCard label="Відео" value={formatNumber(calc.videos)} icon={<CirclePlay size={18} />} />
-            <StatCard label="За відео" value={formatUAH(latest.videoItems[latest.videoItems.length - 1]?.rate ?? 0)} icon={<Wallet size={18} />} />
-          </div>
+          {/* The counter already shows this month's pairs/videos — only repeat them for a past month. */}
+          {latest.period !== currentPeriod() && (
+            <div className="stats-row">
+              <StatCard label="Пари" value={formatNumber(calc.pairs)} icon={<UsersRound size={18} />} />
+              <StatCard label="Відео" value={formatNumber(calc.videos)} icon={<CirclePlay size={18} />} />
+              <StatCard label="За відео" value={formatUAH(latest.videoItems[latest.videoItems.length - 1]?.rate ?? 0)} icon={<Wallet size={18} />} />
+            </div>
+          )}
         </div>
         <div className="dashboard__side stack">
           <section>

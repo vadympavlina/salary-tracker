@@ -39,8 +39,9 @@ export function AnimatedNumber({ value, format = formatUAH, duration = 650, clas
   }, [value, duration]);
 
   return (
-    <span className={`num ${className ?? ''}`} aria-label={format(value)}>
+    <span className={`num ${className ?? ''}`} data-value={format(value)}>
       <span aria-hidden="true">{format(shown)}</span>
+      <span className="sr-only">{format(value)}</span>
     </span>
   );
 }

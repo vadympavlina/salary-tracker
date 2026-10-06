@@ -68,7 +68,7 @@
   transition: color 0.2s, background-color 0.25s var(--ease), transform 0.15s;
 }
 .tabbar__item:active { transform: scale(0.94); }
-.tabbar__item.is-active { color: var(--accent); background: var(--accent-soft); }
+.tabbar__item.is-active { color: var(--accent-text); background: var(--accent-soft); }
 .tabbar__item span { white-space: nowrap; }
 
 /* ---------- Sidebar (desktop) ---------- */
@@ -152,7 +152,7 @@
     transition: background-color 0.15s, color 0.15s;
   }
   .sidebar__item:hover { background: var(--surface-2); color: var(--text); }
-  .sidebar__item.is-active { background: var(--accent-soft); color: var(--accent); }
+  .sidebar__item.is-active { background: var(--accent-soft); color: var(--accent-text); }
   .sidebar__profile {
     margin-top: auto; display: flex; align-items: center; gap: 12px;
     padding: 10px; border-radius: var(--r-md);
@@ -250,7 +250,7 @@
     display: flex; align-items: center; justify-content: center;
     width: 52px; height: 46px; border-radius: 15px; color: var(--text-3);
   }
-  .sidebar__item.is-active { background: var(--accent-soft); color: var(--accent); }
+  .sidebar__item.is-active { background: var(--accent-soft); color: var(--accent-text); }
   .sidebar__profile { margin-top: auto; padding: 3px; }
   .sidebar__profile .avatar { width: 42px; height: 42px; }
   .main {

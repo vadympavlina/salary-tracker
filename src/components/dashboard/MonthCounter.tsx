@@ -5,6 +5,7 @@ import { calculateSalary } from '../../services/calculations/salaryCalculator';
 import { currentPeriod, formatPeriod } from '../../utils/period';
 import { formatNumber, formatUAH, plural } from '../../utils/format';
 import { Link } from '../../router/router';
+import { useToast } from '../ui/Toast';
 
 type Kind = 'pairs' | 'videos';
 
@@ -55,6 +56,7 @@ interface RowProps {
 }
 
 function CounterRow({ kind, label, forms, value, icon, onBump }: RowProps) {
+  const toast = useToast();
   const [pop, setPop] = useState(0);
   const timer = useRef<number | undefined>(undefined);
   const valueRef = useRef(value);
@@ -63,7 +65,10 @@ function CounterRow({ kind, label, forms, value, icon, onBump }: RowProps) {
   const bump = (delta: 1 | -1) => {
     if (delta < 0 && valueRef.current <= 0) return;
     valueRef.current += delta; // optimistic: lets press-and-hold keep counting before the save lands
-    void onBump(kind, delta);
+    onBump(kind, delta).catch(() => {
+      valueRef.current -= delta;
+      toast('Не вдалося зберегти. Перевір вільне місце в браузері.', { tone: 'error' });
+    });
     setPop((n) => n + 1);
     if ('vibrate' in navigator) navigator.vibrate?.(5);
   };

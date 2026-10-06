@@ -12,7 +12,7 @@
   /* Text */
   --text: #15152b;
   --text-2: #5f5f78;
-  --text-3: #8d8da4;
+  --text-3: #6b6b82;
 
   /* Accent — lavender / purple */
   --accent: #6a5ae8;
@@ -20,6 +20,10 @@
   --accent-soft: #f1effe;
   --accent-soft-2: #e5e1fd;
   --accent-ring: rgba(106, 90, 232, 0.32);
+  /* Accent used as text on light/soft surfaces, and as a fill behind white text (WCAG AA). */
+  --accent-text: #5646d8;
+  --accent-fill: #6a5ae8;
+  --accent-fill-hover: #5646d8;
   --accent-soft-3: #c9c1fb;
 
   --segmented-bg: #ebebf2;
@@ -29,12 +33,13 @@
   --bg-transparent: rgba(245, 245, 250, 0);
 
   /* Semantic */
-  --green: #138a47;
+  --green: #107a3e;
   --green-soft: #e7f6ee;
-  --orange: #c2610a;
+  --orange: #a8530a;
   --orange-soft: #fff1e2;
   --red: #d93a3f;
   --red-soft: #fdecec;
+  --red-text: #b4262c;
   --green-text: #0f5f33;
   --orange-text: #8a4a0c;
 
@@ -89,7 +94,7 @@
 
   --text: #f3f3f9;
   --text-2: #a9a9bf;
-  --text-3: #7d7d95;
+  --text-3: #8e8ea8;
 
   --accent: #8b7cff;
   --accent-strong: #a59aff;
@@ -97,6 +102,9 @@
   --accent-soft-2: rgba(139, 124, 255, 0.3);
   --accent-soft-3: rgba(139, 124, 255, 0.45);
   --accent-ring: rgba(139, 124, 255, 0.45);
+  --accent-text: #a59aff;
+  --accent-fill: #6252e6;
+  --accent-fill-hover: #5646d8;
 
   --green: #4ade80;
   --green-soft: rgba(74, 222, 128, 0.14);
@@ -106,6 +114,7 @@
   --orange-text: #fcd4a6;
   --red: #ff6b70;
   --red-soft: rgba(255, 107, 112, 0.15);
+  --red-text: #ff8a8e;
 
   --chart-1: #8b7cff;
   --chart-2: #159fc0;
