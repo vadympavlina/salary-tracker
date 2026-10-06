@@ -159,7 +159,7 @@ test('every screen is served with HTTP 200 (iOS needs it to read the home-screen
     await appReady(page);
     const res = await page.request.get(page.url());
     expect(res.status(), `${page.url()}`).toBe(200);
-    await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute('href', /icons\/apple-touch-icon\.png$/);
+    await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute('href', /icons\/home-icon-180\.png$/);
     const icon = await page.request.get(new URL((await page.locator('link[rel="apple-touch-icon"]').getAttribute('href'))!, page.url()).href);
     expect(icon.status()).toBe(200);
     expect(icon.headers()['content-type']).toContain('image/png');

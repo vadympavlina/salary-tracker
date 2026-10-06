@@ -59,17 +59,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Icons, manifest, splash screens: always ask the network first so a redesigned icon
-  // is what iOS/Android get on "Add to Home Screen"; the cache is only an offline fallback.
-  event.respondWith(
-    fetch(request)
-      .then((res) => {
-        if (res.ok) {
-          const copy = res.clone();
-          caches.open(CACHE).then((cache) => cache.put(request, copy));
-        }
-        return res;
-      })
-      .catch(() => caches.match(request, { ignoreSearch: true })),
-  );
+  // Everything else (icons, manifest, favicons) is left to the browser untouched, exactly
+  // like a site without a service worker — iOS reads the home-screen icon straight from the network.
 });

@@ -36,7 +36,7 @@ function pagesAndServiceWorker(): Plugin {
     enforce: 'post',
     generateBundle(_options, bundle) {
       const files = Object.keys(bundle).filter((f) => !f.endsWith('.map') && f !== 'index.html');
-      const precache = ['./', ...files, 'manifest.webmanifest', 'favicon.svg', 'favicon.ico', 'icons/favicon-32.png', 'icons/icon-192.png', 'icons/apple-touch-icon.png'];
+      const precache = ['./', ...files];
       // Changes whenever code OR any icon/splash/manifest changes, so the SW (and its cache) refreshes.
       const version = createHash('sha1').update(files.sort().join('|')).update(assetsVersion).digest('hex').slice(0, 10);
       const template = readFileSync(new URL('./sw/sw.template.js', import.meta.url), 'utf8');
