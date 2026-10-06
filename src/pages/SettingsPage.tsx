@@ -1,5 +1,5 @@
 import { useRef, useState, type ReactNode } from 'react';
-import { Banknote, ChevronRight, Download, Eraser, HandCoins, Moon, Smartphone, Sun, SunMoon, Trash2, Upload, Wallet, Scale } from 'lucide-react';
+import { Banknote, ChevronRight, CreditCard, Download, HandCoins, Moon, Smartphone, Sun, SunMoon, Trash2, Upload, Wallet, Scale } from 'lucide-react';
 import { useSalary } from '../hooks/useSalaryStore';
 import { isIOS, isStandalone, useInstallPrompt } from '../hooks/useInstallPrompt';
 import { ImportError, parseImport, type AppData } from '../services/storage/salaryStorage';
@@ -36,7 +36,7 @@ function Row({ icon, label, value, onClick, danger }: RowProps) {
   );
 }
 
-type Editor = null | 'profile' | 'pairRate' | 'videoRate' | 'defaultAdvance' | 'advanceMode' | 'theme' | 'clearAll' | 'clearDemo' | 'install';
+type Editor = null | 'profile' | 'pairRate' | 'videoRate' | 'defaultAdvance' | 'defaultCard' | 'advanceMode' | 'theme' | 'clearAll' | 'install';
 
 const THEME_LABEL: Record<ThemePreference, string> = { light: 'Світла', dark: 'Темна', system: 'Як у системі' };
 const THEME_ICON: Record<ThemePreference, ReactNode> = { light: <Sun size={19} />, dark: <Moon size={19} />, system: <SunMoon size={19} /> };
@@ -45,6 +45,7 @@ const RATE_META = {
   pairRate: { title: 'Ставка за пару', label: 'Ставка за пару', icon: <Banknote size={20} /> },
   videoRate: { title: 'Ставка за відео', label: 'Ставка за відео', icon: <Wallet size={20} /> },
   defaultAdvance: { title: 'Аванс за замовчуванням', label: 'Сума авансу', icon: <HandCoins size={20} /> },
+  defaultCard: { title: 'Сума на картку', label: 'Щомісяця приходить на картку', icon: <CreditCard size={20} /> },
 } as const;
 
 export function SettingsPage() {
@@ -59,7 +60,6 @@ export function SettingsPage() {
   const [pendingImport, setPendingImport] = useState<AppData | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const demoCount = records.filter((r) => r.isDemo).length;
   const initials = profile.fullName
     .split(/\s+/)
     .map((w) => w[0])
@@ -68,7 +68,7 @@ export function SettingsPage() {
     .toUpperCase();
 
   const open = (e: Exclude<Editor, null>) => {
-    if (e === 'pairRate' || e === 'videoRate' || e === 'defaultAdvance') setValue(fromNumber(settings[e]));
+    if (e === 'pairRate' || e === 'videoRate' || e === 'defaultAdvance' || e === 'defaultCard') setValue(fromNumber(settings[e]));
     if (e === 'profile') setText({ ...profile });
     if (e === 'advanceMode') setMode(settings.advanceMode);
     setEditor(e);
@@ -76,7 +76,7 @@ export function SettingsPage() {
   const close = () => setEditor(null);
 
   const saveNumber = async () => {
-    if (editor === 'pairRate' || editor === 'videoRate' || editor === 'defaultAdvance') {
+    if (editor === 'pairRate' || editor === 'videoRate' || editor === 'defaultAdvance' || editor === 'defaultCard') {
       await store.updateSettings({ [editor]: toNumber(value) });
       toast('Збережено. Нові розрахунки використають це значення.');
     }
@@ -121,7 +121,7 @@ export function SettingsPage() {
     } else open('install');
   };
 
-  const isRateEditor = editor === 'pairRate' || editor === 'videoRate' || editor === 'defaultAdvance';
+  const isRateEditor = editor === 'pairRate' || editor === 'videoRate' || editor === 'defaultAdvance' || editor === 'defaultCard';
 
   return (
     <>
@@ -141,10 +141,11 @@ export function SettingsPage() {
           <ul className="list-card">
             <Row icon={<Banknote size={19} />} label="Ставка за пару" value={formatUAH(settings.pairRate)} onClick={() => open('pairRate')} />
             <Row icon={<Wallet size={19} />} label="Ставка за відео" value={formatUAH(settings.videoRate)} onClick={() => open('videoRate')} />
+            <Row icon={<CreditCard size={19} />} label="Сума на картку" value={settings.defaultCard ? formatUAH(settings.defaultCard) : 'Немає'} onClick={() => open('defaultCard')} />
             <Row icon={<HandCoins size={19} />} label="Типовий аванс" value={settings.defaultAdvance ? formatUAH(settings.defaultAdvance) : 'Немає'} onClick={() => open('defaultAdvance')} />
             <Row icon={<Scale size={19} />} label="Режим авансу" value={settings.advanceMode === 'part' ? 'Частина ЗП' : 'Додатковий'} onClick={() => open('advanceMode')} />
           </ul>
-          <p className="settings__note">Ставки автоматично підставляються в новий розрахунок — для конкретного місяця їх можна змінити. Збережені розрахунки не змінюються.</p>
+          <p className="settings__note">Ставки й сума на картку автоматично підставляються в кожен новий місяць — для конкретного місяця їх можна змінити. Збережені розрахунки не змінюються.</p>
         </section>
 
         <section className="settings__section">
@@ -159,7 +160,6 @@ export function SettingsPage() {
           <ul className="list-card">
             <Row icon={<Download size={19} />} label="Експорт даних" value="JSON" onClick={exportData} />
             <Row icon={<Upload size={19} />} label="Імпорт даних" onClick={() => fileRef.current?.click()} />
-            {demoCount > 0 && <Row icon={<Eraser size={19} />} label="Очистити демо-дані" value={demoCount} onClick={() => open('clearDemo')} />}
             <Row icon={<Trash2 size={19} />} label="Видалити всі дані" onClick={() => open('clearAll')} danger />
           </ul>
           <p className="settings__note">Дані зберігаються лише на цьому пристрої. Роби експорт, щоб мати резервну копію або перенести дані.</p>
@@ -296,31 +296,6 @@ export function SettingsPage() {
             </Button>
             <Button className="grow" onClick={() => doImport('replace')}>
               Замінити
-            </Button>
-          </>
-        }
-      />
-
-      {/* Clear demo */}
-      <Modal
-        open={editor === 'clearDemo'}
-        onClose={close}
-        title="Очистити демо-дані?"
-        description={`Буде видалено ${demoCount} ${plural(demoCount, ['демо-запис', 'демо-записи', 'демо-записів'])}. Твої власні розрахунки залишаться.`}
-        footer={
-          <>
-            <Button variant="secondary" onClick={close}>
-              Скасувати
-            </Button>
-            <Button
-              className="grow"
-              onClick={async () => {
-                const n = await store.clearDemo();
-                toast(`Видалено ${n} ${plural(n, ['запис', 'записи', 'записів'])}`);
-                close();
-              }}
-            >
-              Очистити
             </Button>
           </>
         }

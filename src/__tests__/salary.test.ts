@@ -7,7 +7,7 @@ import type { SalaryInput } from '../types/salary';
 import { formatUAH } from '../utils/format';
 import { groupAmount, sanitizeAmount } from '../utils/input';
 import { shiftPeriod, formatPeriod } from '../utils/period';
-import { DEMO_INPUTS } from '../data/demoRecords';
+import { SAMPLE_INPUTS } from '../../tests/fixtures/sampleMonths';
 
 const base: SalaryInput = {
   period: '2026-10',
@@ -93,17 +93,17 @@ describe('calculateSalary', () => {
     expect(percentChange(100, undefined)).toBeNull();
   });
 
-  it('demo data matches spec amounts', () => {
-    const gross = DEMO_INPUTS.map((i) => calculateSalary(i).grossIncome);
+  it('sample months add up', () => {
+    const gross = SAMPLE_INPUTS.map((i) => calculateSalary(i).grossIncome);
     expect(gross).toEqual([18420, 20850, 22110, 24320, 26780, 28450]);
-    expect(calculateSalary(DEMO_INPUTS[3]).status).toBe('pending');
-    expect(calculateSalary(DEMO_INPUTS[5]).status).toBe('paid');
+    expect(calculateSalary(SAMPLE_INPUTS[3]).status).toBe('pending');
+    expect(calculateSalary(SAMPLE_INPUTS[5]).status).toBe('paid');
   });
 });
 
 describe('analytics', () => {
   it('series + stats + structure', () => {
-    const recs = DEMO_INPUTS.map((i, n) => ({ ...i, id: String(n), createdAt: '', updatedAt: '', status: 'paid' as const }));
+    const recs = SAMPLE_INPUTS.map((i, n) => ({ ...i, id: String(n), createdAt: '', updatedAt: '', status: 'paid' as const }));
     const pts = buildMonthlySeries(recs, 3);
     expect(pts.map((p) => p.period)).toEqual(['2026-08', '2026-09', '2026-10']);
     const s = seriesStats(pts, (p) => p.gross);
@@ -153,36 +153,46 @@ function memoryAdapter(): StorageAdapter {
 }
 
 describe('storage', () => {
-  it('refreshes v1 demo data but keeps user data', async () => {
+  it('starts empty with the real defaults (no demo data)', async () => {
     const a = memoryAdapter();
-    await a.set('salary_meta', { schemaVersion: 1, seeded: true });
-    await a.set('salary_records', [{ period: '2026-10', pairs: 1, pairRate: 1, isDemo: true }]);
     const data = await createSalaryStorage(a).load();
-    expect(data.records).toHaveLength(6);
-    expect(data.records[0].cashReceived).toBe(8450);
-
-    const b = memoryAdapter();
-    await b.set('salary_meta', { schemaVersion: 1, seeded: true });
-    await b.set('salary_records', [{ period: '2026-10', pairs: 1, pairRate: 1 }]);
-    const mine = await createSalaryStorage(b).load();
-    expect(mine.records).toHaveLength(1);
-    expect(mine.records[0].cashReceived).toBe(0);
+    expect(data.records).toHaveLength(0);
+    expect(data.settings).toMatchObject({ pairRate: 400, videoRate: 50, defaultAdvance: 0, defaultCard: 15961 });
+    expect(await a.get('salary_meta')).toEqual({ schemaVersion: 3 });
   });
 
-  it('seeds demo once and round-trips export/import', async () => {
-    const storage = createSalaryStorage(memoryAdapter());
-    const first = await storage.load();
-    expect(first.records).toHaveLength(6);
-    expect(first.records[0].period).toBe('2026-10');
-    expect(first.records.every((r) => r.isDemo)).toBe(true);
-    await storage.saveRecords([]);
-    expect((await storage.load()).records).toHaveLength(0); // still no re-seed after load
-    expect((await storage.load()).records).toHaveLength(0); // no re-seed
+  it('migration drops old demo rows, keeps own months, swaps placeholder rates', async () => {
+    const a = memoryAdapter();
+    await a.set('salary_meta', { schemaVersion: 2, seeded: true });
+    await a.set('salary_records', [
+      { period: '2026-09', pairs: 1, pairRate: 350, isDemo: true },
+      { period: '2026-10', pairs: 3, pairRate: 350, note: 'моє' },
+    ]);
+    await a.set('salary_settings', { pairRate: 350, videoRate: 45, theme: 'dark' });
+    const data = await createSalaryStorage(a).load();
+    expect(data.records.map((r) => r.period)).toEqual(['2026-10']);
+    expect(data.records[0].note).toBe('моє');
+    expect(data.settings).toMatchObject({ pairRate: 400, videoRate: 50, defaultCard: 15961, theme: 'dark' });
 
-    const json = JSON.stringify(buildExport(first));
-    const imported = parseImport(json);
+    // Custom rates the user set themselves are never touched.
+    const b = memoryAdapter();
+    await b.set('salary_meta', { schemaVersion: 2, seeded: true });
+    await b.set('salary_settings', { pairRate: 380, videoRate: 45 });
+    expect((await createSalaryStorage(b).load()).settings).toMatchObject({ pairRate: 380, videoRate: 45 });
+  });
+
+  it('round-trips export/import', async () => {
+    const storage = createSalaryStorage(memoryAdapter());
+    await storage.load();
+    const { buildRecord } = await import('../services/storage/salaryStorage');
+    await storage.saveRecords(SAMPLE_INPUTS.map((i) => buildRecord(i)));
+    const loaded = await storage.load();
+    expect(loaded.records).toHaveLength(6);
+    expect(loaded.records[0].period).toBe('2026-10');
+
+    const imported = parseImport(JSON.stringify(buildExport(loaded)));
     expect(imported.records).toHaveLength(6);
-    expect(imported.settings.pairRate).toBe(350);
+    expect(imported.settings.defaultCard).toBe(15961);
   });
 
   it('rejects bad files', () => {

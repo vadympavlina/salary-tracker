@@ -42,8 +42,6 @@ export interface SalaryRecord extends SalaryInput {
   createdAt: string;
   updatedAt: string;
   status: PaymentStatus;
-  /** Marks seeded demo rows so they can be cleared in one tap. */
-  isDemo?: boolean;
 }
 
 export interface SalaryCalculation {
@@ -78,6 +76,8 @@ export interface SalarySettings {
   advanceMode: AdvanceMode;
   /** Default advance pre-filled into a new calculation (0 = empty). */
   defaultAdvance: number;
+  /** Fixed amount that comes to the card every month; pre-filled into a new month. */
+  defaultCard: number;
   /** Light by default; dark or follow the OS on request. */
   theme: ThemePreference;
 }

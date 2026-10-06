@@ -42,7 +42,7 @@ const blankForm = (s: SalarySettings, period: string): FormState => ({
   videoItems: [{ count: '', rate: fromNumber(s.videoRate) }],
   advance: fromNumber(s.defaultAdvance),
   additional: '',
-  received: '',
+  received: fromNumber(s.defaultCard),
   cashReceived: '',
   note: '',
 });
@@ -227,7 +227,13 @@ export function CalculatePage() {
               onChange={set('received')}
               icon={<CreditCard size={20} />}
               max={LIMITS.money}
-              hint={overpaid ? 'Аванс і картка більші за нараховане — перевір суми' : 'Віднімається від суми на руки'}
+              hint={
+                overpaid
+                  ? 'Аванс і картка більші за нараховане — перевір суми'
+                  : settings.defaultCard > 0 && toNumber(form.received) !== settings.defaultCard
+                    ? `Стандартно ${formatUAH(settings.defaultCard)} · віднімається від суми на руки`
+                    : 'Віднімається від суми на руки'
+              }
             />
             <div className="hand-callout" aria-live="polite">
               <span>

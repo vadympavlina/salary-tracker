@@ -1,6 +1,5 @@
 import type { ExportPayload, RateLine, SalaryInput, SalaryProfile, SalaryRecord, SalarySettings } from '../../types/salary';
 import { DEFAULT_PROFILE, DEFAULT_SETTINGS } from '../../data/defaults';
-import { DEMO_INPUTS } from '../../data/demoRecords';
 import { calculateSalary } from '../calculations/salaryCalculator';
 import { LocalStorageAdapter, type StorageAdapter } from './storageAdapter';
 
@@ -11,11 +10,10 @@ export const STORAGE_KEYS = {
   meta: 'salary_meta',
 } as const;
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 interface Meta {
   schemaVersion: number;
-  seeded: boolean;
 }
 
 export interface AppData {
@@ -57,8 +55,6 @@ export function buildRecord(input: SalaryInput, existing?: SalaryRecord): Salary
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,
     status: calculateSalary(input).status,
-    // Once the user edits a demo row it becomes their own data.
-    isDemo: undefined,
   };
 }
 
@@ -85,7 +81,6 @@ export function normalizeRecord(raw: unknown): SalaryRecord | null {
     createdAt: typeof r.createdAt === 'string' ? r.createdAt : now,
     updatedAt: typeof r.updatedAt === 'string' ? r.updatedAt : now,
     status: calculateSalary(input).status,
-    isDemo: r.isDemo === true ? true : undefined,
   };
 }
 
@@ -96,6 +91,7 @@ export function normalizeSettings(raw: unknown): SalarySettings {
     videoRate: num(s.videoRate, DEFAULT_SETTINGS.videoRate),
     advanceMode: s.advanceMode === 'extra' ? 'extra' : 'part',
     defaultAdvance: num(s.defaultAdvance, DEFAULT_SETTINGS.defaultAdvance),
+    defaultCard: num(s.defaultCard, DEFAULT_SETTINGS.defaultCard),
     theme: s.theme === 'dark' || s.theme === 'system' ? s.theme : 'light',
   };
 }
@@ -122,18 +118,19 @@ export function createSalaryStorage(adapter: StorageAdapter = new LocalStorageAd
   return {
     async load(): Promise<AppData> {
       const meta = await adapter.get<Meta>(STORAGE_KEYS.meta);
-      // v1 demo rows predate the "на руки" field — refresh them if the user only has demo data.
-      if (meta?.seeded && meta.schemaVersion < SCHEMA_VERSION) {
-        const existing = await adapter.get<{ isDemo?: boolean }[]>(STORAGE_KEYS.records);
-        const onlyDemo = Array.isArray(existing) && existing.length > 0 && existing.every((r) => r?.isDemo);
-        if (onlyDemo) await writeRecords(DEMO_INPUTS.map((i) => ({ ...buildRecord(i), isDemo: true })));
-        await adapter.set<Meta>(STORAGE_KEYS.meta, { schemaVersion: SCHEMA_VERSION, seeded: true });
-      }
-      if (!meta?.seeded) {
-        // First launch: seed demo data so the app doesn't look empty.
-        const records = DEMO_INPUTS.map((i) => ({ ...buildRecord(i), isDemo: true }));
-        await writeRecords(records);
-        await adapter.set<Meta>(STORAGE_KEYS.meta, { schemaVersion: SCHEMA_VERSION, seeded: true });
+      if (!meta || meta.schemaVersion < SCHEMA_VERSION) {
+        // v3: real data only. Drop the old demo rows (the user's own months stay)…
+        const existing = await adapter.get<unknown[]>(STORAGE_KEYS.records);
+        if (Array.isArray(existing)) {
+          const own = existing.filter((r) => !(r && typeof r === 'object' && (r as { isDemo?: unknown }).isDemo === true));
+          if (own.length !== existing.length) await adapter.set(STORAGE_KEYS.records, own);
+        }
+        // …and replace the old placeholder rates (350 / 45) with the real defaults.
+        const s = await adapter.get<Record<string, unknown>>(STORAGE_KEYS.settings);
+        if (s && s.pairRate === 350 && s.videoRate === 45) {
+          await adapter.set(STORAGE_KEYS.settings, { ...s, pairRate: DEFAULT_SETTINGS.pairRate, videoRate: DEFAULT_SETTINGS.videoRate });
+        }
+        await adapter.set<Meta>(STORAGE_KEYS.meta, { schemaVersion: SCHEMA_VERSION });
       }
       const rawRecords = await adapter.get<unknown[]>(STORAGE_KEYS.records);
       const records = Array.isArray(rawRecords)

@@ -45,6 +45,7 @@ if (withWebkit) {
 
 export default defineConfig({
   testDir: 'tests/e2e',
+  globalSetup: './tests/e2e/global-setup.ts',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
@@ -54,6 +55,8 @@ export default defineConfig({
   expect: { timeout: 7_000 },
   use: {
     baseURL: url,
+    // Six sample months (see tests/fixtures); fresh-start.spec.ts opts out to test an empty app.
+    storageState: 'tests/e2e/.state/sample.json',
     locale: 'uk-UA',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',

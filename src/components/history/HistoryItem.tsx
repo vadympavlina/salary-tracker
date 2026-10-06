@@ -18,7 +18,6 @@ export function HistoryItem({ record }: { record: SalaryRecord }) {
           <span className="history-item__title">{formatPeriod(record.period)}</span>
           <span className="history-item__date">
             <PaymentStatus status={calc.status} />
-            {record.isDemo && <span className="tag">демо</span>}
           </span>
         </span>
         <span className="history-item__side">

@@ -44,7 +44,6 @@ interface SalaryStore extends AppData {
   restoreRecord: (record: SalaryRecord) => Promise<void>;
   updateSettings: (patch: Partial<SalarySettings>) => Promise<void>;
   updateProfile: (patch: Partial<SalaryProfile>) => Promise<void>;
-  clearDemo: () => Promise<number>;
   clearAll: () => Promise<void>;
   importData: (data: AppData, mode: 'replace' | 'merge') => Promise<number>;
   exportJson: () => string;
@@ -120,9 +119,9 @@ export function SalaryProvider({ children }: { children: ReactNode }) {
           period,
           pairItems: [{ count: 0, rate: settings.pairRate }],
           videoItems: [{ count: 0, rate: settings.videoRate }],
-          advance: 0,
+          advance: settings.defaultAdvance,
           additional: 0,
-          received: 0,
+          received: settings.defaultCard,
           cashReceived: 0,
           advanceMode: settings.advanceMode,
         };
@@ -166,13 +165,6 @@ export function SalaryProvider({ children }: { children: ReactNode }) {
     setData((d) => ({ ...d, profile }));
   }, []);
 
-  const clearDemo = useCallback(async () => {
-    const before = ref.current.records.length;
-    const kept = ref.current.records.filter((r) => !r.isDemo);
-    await commitRecords(kept);
-    return before - kept.length;
-  }, [commitRecords]);
-
   const clearAll = useCallback(async () => {
     await salaryStorage.clearAll();
     setData({ records: [], settings: DEFAULT_SETTINGS, profile: DEFAULT_PROFILE });
@@ -212,12 +204,11 @@ export function SalaryProvider({ children }: { children: ReactNode }) {
       restoreRecord,
       updateSettings,
       updateProfile,
-      clearDemo,
       clearAll,
       importData,
       exportJson: () => JSON.stringify(buildExport(ref.current), null, 2),
     }),
-    [data, ready, draft, setDraft, saveRecord, bumpCurrentMonth, deleteRecord, restoreRecord, updateSettings, updateProfile, clearDemo, clearAll, importData],
+    [data, ready, draft, setDraft, saveRecord, bumpCurrentMonth, deleteRecord, restoreRecord, updateSettings, updateProfile, clearAll, importData],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

@@ -104,7 +104,6 @@ export function RecordPage({ id }: { id: string }) {
           <p className="meta">
             Створено {formatDateTime(record.createdAt)}
             {record.updatedAt !== record.createdAt && <> · змінено {formatDateTime(record.updatedAt)}</>}
-            {record.isDemo && <> · демо-запис</>}
           </p>
         </div>
         <div className="card">

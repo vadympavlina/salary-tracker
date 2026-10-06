@@ -1,10 +1,11 @@
 import type { SalaryProfile, SalarySettings } from '../types/salary';
 
 export const DEFAULT_SETTINGS: SalarySettings = {
-  pairRate: 350,
-  videoRate: 45,
+  pairRate: 400,
+  videoRate: 50,
   advanceMode: 'part',
   defaultAdvance: 0,
+  defaultCard: 15961,
   theme: 'light',
 };
 
