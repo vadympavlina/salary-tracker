@@ -26,8 +26,8 @@
     <feComposite operator="in" in2="SourceAlpha"/>
     <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
   </filter></defs>
-  <rect width="512" height="512" rx="120" fill="url(#bg)"/>
-  <rect width="512" height="256" rx="120" fill="url(#sheen)"/>
+  <rect width="512" height="512" rx="0" fill="url(#bg)"/>
+  <rect width="512" height="256" rx="0" fill="url(#sheen)"/>
   <g transform="translate(0 0) scale(1)"><g transform="translate(-14 -6)">
     <!-- card peeking out of the wallet -->
     <rect x="112" y="128" width="276" height="170" rx="34" fill="url(#card)" transform="rotate(-9 250 213)"/>

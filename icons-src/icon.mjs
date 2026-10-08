@@ -74,8 +74,8 @@ export function appIcon({ radius = 114, scale = 1, small = false } = {}) {
 }
 
 /** Browser-tab favicon: simplified wallet on a rounded tile, legible at 16–48px. */
-export function faviconIcon({ small = true } = {}) {
-  return appIcon({ radius: 120, small });
+export function faviconIcon({ small = true, radius = 120 } = {}) {
+  return appIcon({ radius, small });
 }
 
 /** Monochrome mask for Safari pinned tabs. */

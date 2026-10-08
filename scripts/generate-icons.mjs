@@ -11,31 +11,32 @@ const pub = (p) => new URL(`../public/${p}`, import.meta.url).pathname;
 mkdirSync(pub('icons'), { recursive: true });
 
 // Vector favicon for modern browsers + Safari pinned tab (monochrome).
-writeFileSync(pub('favicon.svg'), faviconIcon({ small: false }) + '\n');
+writeFileSync(pub('favicon.svg'), faviconIcon({ small: false, radius: 0 }) + '\n');
 writeFileSync(pub('icons/safari-pinned-tab.svg'), pinnedTabIcon() + '\n');
 
 const tmp = join(tmpdir(), `salary-icons-${process.pid}`);
 mkdirSync(tmp, { recursive: true });
 
 // [file, size, svg, transparent background?]
+// Every PNG is a full-bleed opaque square (no alpha channel): iOS and Android add their own
+// rounded mask, and some launchers show transparent pixels as black or reject the icon.
 const png = [
   // Browser tab: simplified wallet that stays legible at 16–32px.
-  ['icons/favicon-16.png', 16, faviconIcon(), true],
-  ['icons/favicon-32.png', 32, faviconIcon(), true],
-  ['icons/app-192.png', 192, appIcon(), true],
-  ['icons/app-512.png', 512, appIcon(), true],
-  // iOS adds its own rounded mask and shows transparency as black — full bleed.
+  ['icons/favicon-16.png', 16, faviconIcon({ radius: 0 }), false],
+  ['icons/favicon-32.png', 32, faviconIcon({ radius: 0 }), false],
+  ['icons/appicon-192.png', 192, appIcon({ radius: 0 }), false],
+  ['icons/appicon-512.png', 512, appIcon({ radius: 0 }), false],
   // New file name on purpose: iOS remembers failed icon URLs, a fresh one is always fetched.
-  ['icons/home-icon-180.png', 180, appIcon({ radius: 0 }), false],
+  ['icons/apple-icon-180.png', 180, appIcon({ radius: 0 }), false],
   // Android adaptive icons: coin inside the 80% safe-zone circle, full bleed.
   ['icons/app-maskable-192.png', 192, appIcon({ radius: 0, scale: 0.8 }), false],
   ['icons/app-maskable-512.png', 512, appIcon({ radius: 0, scale: 0.8 }), false],
   // Windows start-menu tile.
   ['icons/mstile-150.png', 150, appIcon({ radius: 0, scale: 0.9 }), false],
   // Sources for favicon.ico
-  [join(tmp, 'ico-16.png'), 16, faviconIcon(), true],
-  [join(tmp, 'ico-32.png'), 32, faviconIcon(), true],
-  [join(tmp, 'ico-48.png'), 48, faviconIcon({ small: false }), true],
+  [join(tmp, 'ico-16.png'), 16, faviconIcon({ radius: 0 }), false],
+  [join(tmp, 'ico-32.png'), 32, faviconIcon({ radius: 0 }), false],
+  [join(tmp, 'ico-48.png'), 48, faviconIcon({ small: false, radius: 0 }), false],
 ];
 
 const executablePath = process.env.CHROMIUM_PATH ?? '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
@@ -55,7 +56,7 @@ execFileSync('python3', [
   '-c',
   `import sys
 from PIL import Image
-imgs=[Image.open(p).convert('RGBA') for p in sys.argv[2:]]
+imgs=[Image.open(p).convert('RGB') for p in sys.argv[2:]]
 imgs[-1].save(sys.argv[1], format='ICO', sizes=[i.size for i in imgs], append_images=imgs[:-1])`,
   pub('favicon.ico'),
   join(tmp, 'ico-16.png'),
@@ -64,14 +65,14 @@ imgs[-1].save(sys.argv[1], format='ICO', sizes=[i.size for i in imgs], append_im
 ]);
 rmSync(tmp, { recursive: true, force: true });
 
-// Losslessly shrink PNGs.
+// Drop the alpha channel and losslessly shrink PNGs.
 execFileSync('python3', [
   '-I',
   '-c',
   `import sys
 from PIL import Image
 for p in sys.argv[1:]:
-    Image.open(p).save(p, optimize=True)`,
+    Image.open(p).convert('RGB').save(p, optimize=True)`,
   ...png.filter(([f]) => !f.startsWith('/')).map(([f]) => pub(f)),
 ]);
 console.log('icons generated');
