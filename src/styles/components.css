@@ -898,3 +898,19 @@ html.modal-open { overflow: hidden; }
   .action-bar--sticky .btn--compact { flex: 0 0 52px; padding: 0; }
   .action-bar--sticky .btn--compact span { display: none; }
 }
+
+/* Per-rate comment: a quiet one-line cell under count × rate */
+.line-note .field__box { min-height: 44px; gap: 10px; padding-top: 6px; padding-bottom: 6px; cursor: text; }
+.line-note__icon { color: var(--text-3); flex-shrink: 0; }
+.line-note__input {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  /* 16px: iOS zooms the page into smaller inputs on focus. */
+  font-size: 16px;
+  color: var(--text-2);
+}
+.line-note__input:focus { outline: none; color: var(--text); }
+.line-note__input::placeholder { color: var(--placeholder); }

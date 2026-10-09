@@ -38,11 +38,16 @@ const num = (v: unknown, fallback = 0) => {
 };
 
 /** Rate lines from storage; records saved before multi-rate support had a single pairs/pairRate pair. */
+export const LINE_NOTE_MAX = 40;
+
 function lines(items: unknown, legacyCount: unknown, legacyRate: unknown): RateLine[] {
   if (Array.isArray(items)) {
     const out = items
       .filter((l): l is Record<string, unknown> => !!l && typeof l === 'object')
-      .map((l) => ({ count: num(l.count), rate: num(l.rate) }))
+      .map((l) => {
+        const note = typeof l.note === 'string' ? l.note.trim().slice(0, LINE_NOTE_MAX) : '';
+        return note ? { count: num(l.count), rate: num(l.rate), note } : { count: num(l.count), rate: num(l.rate) };
+      })
       .slice(0, 10);
     if (out.length) return out;
   }

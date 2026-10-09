@@ -53,6 +53,8 @@ test('several rates in one month + note', async ({ page }) => {
   await page.getByRole('button', { name: 'Інша ставка: пари' }).click();
   await field(page, 'Кількість пар (ставка 2)').fill('4');
   await field(page, 'Ставка за пару 2').fill('400');
+  await field(page, 'Коментар: пари, ставка 1').fill('Група А');
+  await field(page, 'Коментар: пари, ставка 2').fill('Індивідуальні');
   await field(page, 'Перевірені відео').fill('100');
   await field(page, 'Коментар до місяця').fill('Нова ставка з 15-го');
   // 8×350 + 4×400 + 100×45 = 2800 + 1600 + 4500
@@ -63,6 +65,8 @@ test('several rates in one month + note', async ({ page }) => {
   await expect(breakdown.getByText(`8 × ${uah('350')}`)).toBeVisible();
   await expect(breakdown.getByText(`4 × ${uah('400')}`)).toBeVisible();
   await expect(breakdown.getByText('Пари разом')).toBeVisible();
+  await expect(breakdown.getByText('Група А')).toBeVisible();
+  await expect(breakdown.getByText('Індивідуальні')).toBeVisible();
   await expect(page.locator('.note')).toContainText('Нова ставка з 15-го');
 
   await page.getByRole('button', { name: 'Зберегти' }).click();
@@ -72,6 +76,7 @@ test('several rates in one month + note', async ({ page }) => {
   // Edit keeps both lines; removing the extra line drops it.
   await page.getByRole('button', { name: 'Редагувати' }).click();
   await expect(field(page, 'Кількість пар (ставка 2)')).toHaveValue('4');
+  await expect(field(page, 'Коментар: пари, ставка 2')).toHaveValue('Індивідуальні');
   await page.getByRole('button', { name: /Прибрати ставку 2/ }).click();
   await expect(field(page, 'Кількість пар (ставка 2)')).toHaveCount(0);
   await expect(page.locator('.hand-callout b')).toHaveText(uah('7 300'));

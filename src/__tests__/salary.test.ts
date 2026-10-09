@@ -82,6 +82,21 @@ describe('calculateSalary', () => {
     expect(calculateSalary(old!).grossIncome).toBe(3850 + 21780);
   });
 
+  it('keeps a short comment per rate line, trimmed and length-limited; drops empty ones', () => {
+    const r = normalizeRecord({
+      ...base,
+      pairItems: [
+        { count: 8, rate: 350, note: '  Група А  ' },
+        { count: 4, rate: 400, note: '' },
+        { count: 1, rate: 500, note: 'x'.repeat(80) },
+      ],
+    });
+    expect(r!.pairItems[0]).toEqual({ count: 8, rate: 350, note: 'Група А' });
+    expect(r!.pairItems[1]).toEqual({ count: 4, rate: 400 });
+    expect(r!.pairItems[2].note).toHaveLength(40);
+    expect(calculateSalary(r!).pairIncome).toBe(2800 + 1600 + 500);
+  });
+
   it('ignores a legacy taxRate field from old saves', () => {
     const legacy = normalizeRecord({ ...base, taxRate: 9 });
     expect(legacy).not.toHaveProperty('taxRate');

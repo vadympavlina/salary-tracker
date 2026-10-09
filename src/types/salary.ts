@@ -16,6 +16,8 @@ export type ThemePreference = 'light' | 'dark' | 'system';
 export interface RateLine {
   count: number;
   rate: number;
+  /** Short label for this rate, e.g. "Група А" or "з 15-го". */
+  note?: string;
 }
 
 /** Raw inputs the user enters for a month. Everything else is derived by `calculateSalary`. */

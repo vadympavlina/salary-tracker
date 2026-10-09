@@ -38,8 +38,8 @@ const toForm = (i: SalaryInput): FormState => ({
 
 const blankForm = (s: SalarySettings, period: string): FormState => ({
   period,
-  pairItems: [{ count: '', rate: fromNumber(s.pairRate) }],
-  videoItems: [{ count: '', rate: fromNumber(s.videoRate) }],
+  pairItems: [{ count: '', rate: fromNumber(s.pairRate), note: '' }],
+  videoItems: [{ count: '', rate: fromNumber(s.videoRate), note: '' }],
   advance: fromNumber(s.defaultAdvance),
   additional: '',
   received: fromNumber(s.defaultCard),

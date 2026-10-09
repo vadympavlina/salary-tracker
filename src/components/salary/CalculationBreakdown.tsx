@@ -11,13 +11,13 @@ const money = (v: ReactNode, tone?: Tone) => <span className={tone ? `tone-${ton
 function Lines({ lines, title, total, forms }: { lines: RateLine[]; title: string; total: number; forms: [string, string, string] }) {
   if (lines.length <= 1) {
     const l = lines[0] ?? { count: 0, rate: 0 };
-    return <Row className="bd-row" title={title} subtitle={`${formatNumber(l.count)} × ${formatUAH(l.rate)}`} value={formatUAH(total)} />;
+    return <Row className="bd-row" title={title} subtitle={`${formatNumber(l.count)} × ${formatUAH(l.rate)}${l.note ? ` · ${l.note}` : ''}`} value={formatUAH(total)} />;
   }
   const count = lines.reduce((s, l) => s + l.count, 0);
   return (
     <>
       {lines.map((l, i) => (
-        <Row key={i} className="bd-row bd-row--sub" title={`${formatNumber(l.count)} × ${formatUAH(l.rate)}`} value={formatUAH(l.count * l.rate)} />
+        <Row key={i} className="bd-row bd-row--sub" title={`${formatNumber(l.count)} × ${formatUAH(l.rate)}`} subtitle={l.note} value={formatUAH(l.count * l.rate)} />
       ))}
       <Row className="bd-row" title={`${title} разом`} subtitle={`${formatNumber(count)} ${plural(count, forms)}`} value={formatUAH(total)} />
     </>

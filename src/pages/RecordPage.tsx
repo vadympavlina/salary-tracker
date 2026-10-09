@@ -54,8 +54,8 @@ export function RecordPage({ id }: { id: string }) {
   const share = async () => {
     const text = [
       `Зарплата — ${title}`,
-      `Пари: ${record.pairItems.map((l) => `${formatNumber(l.count)} × ${formatUAH(l.rate)}`).join(' + ')} = ${formatUAH(calc.pairIncome)}`,
-      `Відео: ${record.videoItems.map((l) => `${formatNumber(l.count)} × ${formatUAH(l.rate)}`).join(' + ')} = ${formatUAH(calc.videoIncome)}`,
+      `Пари: ${record.pairItems.map((l) => `${formatNumber(l.count)} × ${formatUAH(l.rate)}${l.note ? ` (${l.note})` : ''}`).join(' + ')} = ${formatUAH(calc.pairIncome)}`,
+      `Відео: ${record.videoItems.map((l) => `${formatNumber(l.count)} × ${formatUAH(l.rate)}${l.note ? ` (${l.note})` : ''}`).join(' + ')} = ${formatUAH(calc.videoIncome)}`,
       ...(record.note ? [`Нотатка: ${record.note}`] : []),
       `Аванс: ${formatUAH(calc.advance)} · Додаткові: ${formatUAH(calc.additional)}`,
       `Всього нараховано: ${formatUAH(calc.grossIncome)}`,

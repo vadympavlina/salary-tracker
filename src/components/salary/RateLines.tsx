@@ -1,11 +1,15 @@
-import { Plus, X } from 'lucide-react';
+import { useId } from 'react';
+import { MessageSquareText, Plus, X } from 'lucide-react';
 import { NumberInput } from '../ui/fields';
 import { formatNumber, formatUAH } from '../../utils/format';
 import { toNumber } from '../../utils/input';
+import type { RateLine } from '../../types/salary';
+import { LINE_NOTE_MAX } from '../../services/storage/salaryStorage';
 
 export interface LineForm {
   count: string;
   rate: string;
+  note: string;
 }
 
 interface Props {
@@ -35,7 +39,7 @@ const MAX_LINES = 5;
 export function RateLines({ legend, countLabel, rateLabel, lines, onChange, maxCount, maxRate, rateStep, defaultRate, countError, validate }: Props) {
   const update = (i: number, patch: Partial<LineForm>) => onChange(lines.map((l, j) => (j === i ? { ...l, ...patch } : l)));
   const remove = (i: number) => onChange(lines.filter((_, j) => j !== i));
-  const add = () => onChange([...lines, { count: '', rate: lines[lines.length - 1]?.rate ?? String(defaultRate) }]);
+  const add = () => onChange([...lines, { count: '', rate: lines[lines.length - 1]?.rate ?? String(defaultRate), note: '' }]);
   const total = lines.reduce((s, l) => s + toNumber(l.count) * toNumber(l.rate), 0);
   const multi = lines.length > 1;
 
@@ -82,6 +86,11 @@ export function RateLines({ legend, countLabel, rateLabel, lines, onChange, maxC
                 error={validate && toNumber(l.count) > 0 && rate <= 0 ? `Вкажи ${rateLabel.toLowerCase()}` : undefined}
                 hint={i === 0 && rate !== defaultRate && defaultRate > 0 ? `Зазвичай ${formatUAH(defaultRate)}` : undefined}
               />
+              <LineNote
+                label={`Коментар: ${legend.toLowerCase()}${multi ? `, ставка ${n}` : ''}`}
+                value={l.note}
+                onChange={(note) => update(i, { note })}
+              />
             </div>
           );
         })}
@@ -97,12 +106,43 @@ export function RateLines({ legend, countLabel, rateLabel, lines, onChange, maxC
   );
 }
 
-export const linesToForm = (lines: { count: number; rate: number }[]) =>
-  lines.length ? lines.map((l) => ({ count: l.count ? String(l.count) : '', rate: l.rate ? String(l.rate) : '' })) : [{ count: '', rate: '' }];
+/** One-line free-text label for a rate ("Група А", "з 15-го"). */
+function LineNote({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  const id = useId();
+  return (
+    <div className="field line-note">
+      <div className="field__box" onClick={(e) => (e.currentTarget.querySelector('input') as HTMLInputElement | null)?.focus()}>
+        <MessageSquareText className="line-note__icon" size={17} aria-hidden="true" />
+        <label htmlFor={id} className="sr-only">
+          {label}
+        </label>
+        <input
+          id={id}
+          className="line-note__input"
+          type="text"
+          value={value}
+          maxLength={LINE_NOTE_MAX}
+          placeholder="Коментар, напр. «група А»"
+          autoComplete="off"
+          enterKeyHint="done"
+          onChange={(e) => onChange(e.target.value)}
+        />
+      </div>
+    </div>
+  );
+}
+
+export const linesToForm = (lines: RateLine[]) =>
+  lines.length
+    ? lines.map((l) => ({ count: l.count ? String(l.count) : '', rate: l.rate ? String(l.rate) : '', note: l.note ?? '' }))
+    : [{ count: '', rate: '', note: '' }];
 
 /** Drops empty extra lines; always keeps at least one. */
 export const formToLines = (lines: LineForm[]) => {
-  const parsed = lines.map((l) => ({ count: toNumber(l.count), rate: toNumber(l.rate) }));
+  const parsed: RateLine[] = lines.map((l) => {
+    const note = l.note.trim();
+    return note ? { count: toNumber(l.count), rate: toNumber(l.rate), note } : { count: toNumber(l.count), rate: toNumber(l.rate) };
+  });
   const kept = parsed.filter((l, i) => i === 0 || l.count > 0);
   return kept.length ? kept : [{ count: 0, rate: 0 }];
 };
