@@ -7,7 +7,7 @@ test('full flow: create → calculate → save → history → edit → delete �
 
   // 1. First launch → demo data
   await page.goto('./');
-  await expect(page.getByRole('heading', { name: /Привіт, Вадим/ })).toBeVisible();
+  await expect(page.getByText('Привіт, Вадим')).toBeVisible();
   await expect(page.locator(`.hero__amount[data-value="${uah('8 450')}"]`)).toBeVisible();
 
   // 2. New calculation for November 2026

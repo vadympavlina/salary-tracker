@@ -7,13 +7,14 @@ import { PageHeader } from '../components/ui/PageHeader';
 import { Button, IconButton } from '../components/ui/Button';
 import { Segmented } from '../components/ui/Segmented';
 import { EmptyState } from '../components/ui/EmptyState';
-import { HistoryItem } from '../components/history/HistoryItem';
-import { Group } from '../components/ui/List';
+import { MonthTile, NewMonthTile } from '../components/history/MonthTile';
+import { currentPeriod } from '../utils/period';
 
 type Filter = 'all' | 'paid' | 'waiting';
 
 export function HistoryPage() {
   const { records } = useSalary();
+  const nowPeriod = currentPeriod();
   const [filter, setFilter] = useState<Filter>(() => (sessionStorage.getItem('history_filter') as Filter) || 'all');
 
   const withStatus = useMemo(() => records.map((r) => ({ r, c: calculateSalary(r) })), [records]);
@@ -92,24 +93,28 @@ export function HistoryPage() {
               text={filter === 'paid' ? 'Тут з’являться повністю виплачені місяці.' : 'Немає місяців, що очікують на виплату.'}
             />
           ) : (
-            groups.map(([year, items]) => (
-              <Group
-                key={year}
-                id={`year-${year}`}
-                className="history-group"
-                list
-                title={year}
-                action={
-                  <span className="group-list__meta num">
-                    на руки {formatUAH(items.reduce((s, x) => s + x.c.netIncome, 0))}
-                  </span>
-                }
-              >
-                {items.map(({ r }) => (
-                  <HistoryItem key={r.id} record={r} swipeable />
-                ))}
-              </Group>
-            ))
+            groups.map(([year, items]) => {
+              const net = items.reduce((sum, x) => sum + x.c.netIncome, 0);
+              const owedYear = items.reduce((sum, x) => sum + x.c.remaining, 0);
+              const showNew = filter === 'all' && year === nowPeriod.slice(0, 4) && !records.some((r) => r.period === nowPeriod);
+              return (
+                <section key={year} className="history-year" aria-labelledby={`year-${year}`}>
+                  <div className="history-year__head">
+                    <h2 id={`year-${year}`}>{year}</h2>
+                    <span className="num">
+                      на руки {formatUAH(net)}
+                      {owedYear > 0 && <span className="tone-orange"> · очікується {formatUAH(owedYear)}</span>}
+                    </span>
+                  </div>
+                  <ul className="month-tiles">
+                    {showNew && <NewMonthTile period={nowPeriod} />}
+                    {items.map(({ r }) => (
+                      <MonthTile key={r.id} record={r} current={r.period === nowPeriod} />
+                    ))}
+                  </ul>
+                </section>
+              );
+            })
           )}
         </>
       )}

@@ -11,6 +11,8 @@ interface Props {
   actions: SwipeAction[];
   /** A long swipe across most of the row runs the last action (iOS "full swipe"). */
   fullSwipe?: boolean;
+  /** column: actions stacked in one narrow strip (tiles); row: side by side (list rows). */
+  layout?: 'row' | 'column';
   children: ReactNode;
 }
 
@@ -23,9 +25,9 @@ const FULL_SWIPE = 0.62;
  * Vertical scrolling stays native (touch-action: pan-y); the drag only starts once the
  * gesture is clearly horizontal. Mouse users get the same actions on the record screen.
  */
-export function SwipeRow({ actions, fullSwipe = true, children }: Props) {
+export function SwipeRow({ actions, fullSwipe = true, layout = 'row', children }: Props) {
   const id = useId();
-  const width = ACTION_W * actions.length;
+  const width = layout === 'column' ? ACTION_W : ACTION_W * actions.length;
   const [offset, setOffset] = useState(0);
   const [dragging, setDragging] = useState(false);
   const rowRef = useRef<HTMLDivElement>(null);
@@ -109,7 +111,7 @@ export function SwipeRow({ actions, fullSwipe = true, children }: Props) {
   const pastFull = fullSwipe && -offset > (rowRef.current?.offsetWidth ?? 360) * FULL_SWIPE;
 
   return (
-    <div ref={rowRef} className={`swipe${dragging ? ' swipe--dragging' : ''}${open ? ' swipe--open' : ''}`}>
+    <div ref={rowRef} className={`swipe swipe--${layout}${dragging ? ' swipe--dragging' : ''}${open ? ' swipe--open' : ''}`}>
       <div className={`swipe__actions${pastFull ? ' swipe__actions--full' : ''}`} style={{ width: Math.max(width, -offset) }} aria-hidden={!open}>
         {actions.map((a) => (
           <button

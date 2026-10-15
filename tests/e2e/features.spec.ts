@@ -146,7 +146,7 @@ async function swipe(page: Page, target: Locator, dx: number) {
   await cdp.detach();
 }
 
-test('history: swipe a month left → Змінити / Видалити, delete can be undone', async ({ page, browserName }, testInfo) => {
+test('history: swipe a month tile left → Змінити / Видалити, delete can be undone', async ({ page, browserName }, testInfo) => {
   test.skip(browserName !== 'chromium' || !testInfo.project.use.hasTouch, 'touch swipe via Chromium protocol');
   await page.goto('#/history');
   await appReady(page);
@@ -175,7 +175,8 @@ test('history: swipe a month left → Змінити / Видалити, delete 
   await page.getByRole('button', { name: 'Скасувати' }).click();
   await expect(rows).toHaveCount(6);
 
-  // A long swipe deletes straight away.
-  await swipe(page, page.locator('.swipe').first(), -((await page.locator('.swipe').first().boundingBox())!.width * 0.8));
-  await expect(rows).toHaveCount(5);
+  // Tiles have no "full swipe": however far you drag, it only opens the actions.
+  await swipe(page, page.locator('.swipe').first(), -((await page.locator('.swipe').first().boundingBox())!.width * 0.9));
+  await expect(page.locator('.swipe').first()).toHaveClass(/swipe--open/);
+  await expect(rows).toHaveCount(6);
 });

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { CirclePlay, Minus, Plus, UsersRound } from 'lucide-react';
 import { useSalary } from '../../hooks/useSalaryStore';
 import { calculateSalary } from '../../services/calculations/salaryCalculator';
-import { currentPeriod, formatPeriod } from '../../utils/period';
+import { currentPeriod, formatMonth } from '../../utils/period';
 import { formatNumber, formatUAH, plural } from '../../utils/format';
 import { Link } from '../../router/router';
 import { useToast } from '../ui/Toast';
@@ -15,19 +15,21 @@ type Kind = 'pairs' | 'videos';
  * so the month is already filled in when it's time to calculate.
  */
 export function MonthCounter() {
-  const { findByPeriod, bumpCurrentMonth } = useSalary();
+  const { findByPeriod, bumpCurrentMonth, settings } = useSalary();
   const period = currentPeriod();
   const record = findByPeriod(period);
   const calc = record ? calculateSalary(record) : undefined;
   const pairs = calc?.pairs ?? 0;
   const videos = calc?.videos ?? 0;
-  const earned = (calc?.pairIncome ?? 0) + (calc?.videoIncome ?? 0);
+  // The counter adds to the month's last rate line, so that is the rate shown.
+  const pairRate = record?.pairItems[record.pairItems.length - 1]?.rate ?? settings.pairRate;
+  const videoRate = record?.videoItems[record.videoItems.length - 1]?.rate ?? settings.videoRate;
 
   return (
     <Group
       className="counter"
       id="counter"
-      title="Цей місяць"
+      title={`Цей місяць · ${formatMonth(period)}`}
       action={
         record ? (
           <Link to={`/history/${record.id}`} className="link">
@@ -35,14 +37,9 @@ export function MonthCounter() {
           </Link>
         ) : undefined
       }
-      footer={
-        <>
-          {formatPeriod(period)} · за пари й відео <b className="num">{formatUAH(earned)}</b>
-        </>
-      }
     >
-      <CounterRow kind="pairs" label="Пари" forms={['пара', 'пари', 'пар']} value={pairs} icon={<Tile color="violet"><UsersRound size={17} strokeWidth={2.4} /></Tile>} onBump={bumpCurrentMonth} />
-      <CounterRow kind="videos" label="Відео" forms={['відео', 'відео', 'відео']} value={videos} icon={<Tile color="blue"><CirclePlay size={17} strokeWidth={2.4} /></Tile>} onBump={bumpCurrentMonth} />
+      <CounterRow kind="pairs" label="Пари" forms={['пара', 'пари', 'пар']} value={pairs} detail={`× ${formatUAH(pairRate)} · ${formatUAH(calc?.pairIncome ?? 0)}`} icon={<Tile color="violet"><UsersRound size={17} strokeWidth={2.4} /></Tile>} onBump={bumpCurrentMonth} />
+      <CounterRow kind="videos" label="Відео" forms={['відео', 'відео', 'відео']} value={videos} detail={`× ${formatUAH(videoRate)} · ${formatUAH(calc?.videoIncome ?? 0)}`} icon={<Tile color="blue"><CirclePlay size={17} strokeWidth={2.4} /></Tile>} onBump={bumpCurrentMonth} />
     </Group>
   );
 }
@@ -52,11 +49,12 @@ interface RowProps {
   label: string;
   forms: [string, string, string];
   value: number;
+  detail: string;
   icon: ReactNode;
   onBump: (kind: Kind, delta: number) => Promise<unknown>;
 }
 
-function CounterRow({ kind, label, forms, value, icon, onBump }: RowProps) {
+function CounterRow({ kind, label, forms, value, detail, icon, onBump }: RowProps) {
   const toast = useToast();
   const [pop, setPop] = useState(0);
   const timer = useRef<number | undefined>(undefined);
@@ -107,7 +105,10 @@ function CounterRow({ kind, label, forms, value, icon, onBump }: RowProps) {
   return (
     <div className="counter__row">
       {icon}
-      <span className="counter__label">{label}</span>
+      <span className="counter__label">
+        <b>{label}</b>
+        <small className="num">{detail}</small>
+      </span>
       <span key={pop} className="counter__value num pop" aria-live="polite" aria-atomic="true">
         {formatNumber(value)}
         <span className="sr-only"> {plural(value, forms)}</span>

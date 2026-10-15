@@ -1,19 +1,19 @@
-import { Plus, WalletCards } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ChevronRight, Clock3, Plus, WalletCards } from 'lucide-react';
 import { useSalary } from '../hooks/useSalaryStore';
 import { calculateSalary, percentChange } from '../services/calculations/salaryCalculator';
-import { formatMonthShort, formatPeriod, shiftPeriod } from '../utils/period';
-import { formatCompact, formatUAH } from '../utils/format';
+import { currentPeriod, formatMonth, formatMonthShort, formatPeriod, shiftPeriod } from '../utils/period';
+import { formatCompact, formatUAH, plural } from '../utils/format';
 import { Link } from '../router/router';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Button, IconButton } from '../components/ui/Button';
-import { Group } from '../components/ui/List';
 import { EmptyState } from '../components/ui/EmptyState';
 import { SalaryCard } from '../components/salary/SalaryCard';
 import { MonthCounter } from '../components/dashboard/MonthCounter';
-import { HistoryItem } from '../components/history/HistoryItem';
 import { ChartCard } from '../components/analytics/ChartCard';
 import { BarChart } from '../components/analytics/BarChart';
 import { buildMonthlySeries } from '../services/calculations/analytics';
+import type { SalaryRecord } from '../types/salary';
 
 const initials = (name: string) =>
   name
@@ -23,16 +23,17 @@ const initials = (name: string) =>
     .join('')
     .toUpperCase();
 
-const today = () => new Intl.DateTimeFormat('uk-UA', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
-
 export function HomePage() {
   const { records, profile, findByPeriod } = useSalary();
-  const latest = records[0];
+  // Which month the card shows. Defaults to this month (once it exists), else the latest one.
+  const [picked, setPicked] = useState<string | null>(null);
+  const current = findByPeriod(currentPeriod());
+  const selected = (picked && records.find((r) => r.period === picked)) || current || records[0];
 
   const header = (
     <PageHeader
-      eyebrow={today()}
-      title={`Привіт, ${profile.firstName}`}
+      eyebrow={`Привіт, ${profile.firstName}`}
+      title="Зарплата"
       actions={
         <>
           <IconButton label="Новий розрахунок" to="/calculate?new=1" tone="accent">
@@ -46,7 +47,7 @@ export function HomePage() {
     />
   );
 
-  if (!latest) {
+  if (!selected) {
     return (
       <>
         {header}
@@ -67,17 +68,25 @@ export function HomePage() {
     );
   }
 
-  const calc = calculateSalary(latest);
-  const prev = findByPeriod(shiftPeriod(latest.period, -1));
+  const calc = calculateSalary(selected);
+  const prev = findByPeriod(shiftPeriod(selected.period, -1));
   const change = percentChange(calc.grossIncome, prev ? calculateSalary(prev).grossIncome : undefined);
+  // Older months that still owe money, newest first (the selected one already shows it on the card).
+  const waiting = records.filter((r) => r.id !== selected.id && calculateSalary(r).remaining > 0);
 
   return (
     <>
       {header}
       <div className="dashboard">
         <div className="dashboard__main stack">
-          <SalaryCard record={latest} calc={calc} change={change} to={`/history/${latest.id}`} />
+          <div className="home-month">
+            <MonthChips records={records} selected={selected} onPick={setPicked} />
+            <SalaryCard record={selected} calc={calc} change={change} to={`/history/${selected.id}`} variant="dark" />
+          </div>
           <MonthCounter />
+          {waiting.length > 0 && <WaitingBanner records={waiting} />}
+        </div>
+        <div className="dashboard__side stack">
           {records.length > 1 && (
             <div className="desktop-only">
               <ChartCard title="Динаміка доходу" subtitle="Нараховано за останні місяці" action={<Link to="/analytics" className="link">Аналітика</Link>}>
@@ -86,20 +95,79 @@ export function HomePage() {
                   format={formatUAH}
                   axisFormat={formatCompact}
                   ariaLabel="Нараховано по місяцях"
-                  height={150}
+                  height={170}
                 />
               </ChartCard>
             </div>
           )}
         </div>
-        <div className="dashboard__side stack">
-          <Group title="Останні" id="recent" list action={<Link to="/history" className="link">Усі</Link>}>
-            {records.slice(0, 4).map((r) => (
-              <HistoryItem key={r.id} record={r} />
-            ))}
-          </Group>
-        </div>
       </div>
     </>
+  );
+}
+
+/** Horizontal month switcher above the card; a dot marks months that still owe money. */
+function MonthChips({ records, selected, onPick }: { records: SalaryRecord[]; selected: SalaryRecord; onPick: (period: string) => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const items = useMemo(() => records.map((r) => ({ id: r.id, period: r.period, waiting: calculateSalary(r).remaining > 0 })), [records]);
+  const thisYear = currentPeriod().slice(0, 4);
+
+  // Keep the chosen chip in view. (Scrolls the strip itself: scrollIntoView would also move
+  // the browser's Tab starting point and the page.)
+  useEffect(() => {
+    const strip = ref.current;
+    const chip = strip?.querySelector<HTMLElement>('[aria-checked="true"]');
+    if (!strip || !chip) return;
+    const left = chip.offsetLeft - strip.offsetLeft;
+    if (left < strip.scrollLeft || left + chip.offsetWidth > strip.scrollLeft + strip.clientWidth) {
+      strip.scrollTo({ left: Math.max(0, left - 16), behavior: 'smooth' });
+    }
+  }, [selected.period]);
+
+  // Radio-group keyboard pattern: arrows move between months, only the chosen chip is a Tab stop.
+  const onKey = (e: React.KeyboardEvent) => {
+    const dir = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+    if (!dir) return;
+    e.preventDefault();
+    const i = items.findIndex((m) => m.period === selected.period);
+    const next = items[Math.min(items.length - 1, Math.max(0, i + dir))];
+    onPick(next.period);
+    requestAnimationFrame(() => ref.current?.querySelector<HTMLElement>('[aria-checked="true"]')?.focus());
+  };
+
+  if (items.length < 2) return null;
+  return (
+    <div ref={ref} className="month-chips" role="radiogroup" aria-label="Місяць" onKeyDown={onKey}>
+      {items.map((m) => {
+        const on = m.period === selected.period;
+        return (
+          <button key={m.id} type="button" role="radio" aria-checked={on} tabIndex={on ? 0 : -1} className={`month-chip${on ? ' is-on' : ''}`} onClick={() => onPick(m.period)}>
+            {formatMonth(m.period)}
+            {m.period.slice(0, 4) !== thisYear && <span className="month-chip__year">{m.period.slice(2, 4)}</span>}
+            {m.waiting && (
+              <span className="month-chip__dot">
+                <span className="sr-only">, очікує виплату</span>
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function WaitingBanner({ records }: { records: SalaryRecord[] }) {
+  const first = records[0];
+  const total = records.reduce((s, r) => s + calculateSalary(r).remaining, 0);
+  const text =
+    records.length === 1
+      ? `${formatMonth(first.period)} ще очікує ${formatUAH(total)}`
+      : `${records.length} ${plural(records.length, ['місяць', 'місяці', 'місяців'])} ще очікують ${formatUAH(total)}`;
+  return (
+    <Link to={records.length === 1 ? `/history/${first.id}` : '/history'} className="waiting-banner">
+      <Clock3 size={18} aria-hidden="true" />
+      <span className="num">{text}</span>
+      <ChevronRight size={18} aria-hidden="true" />
+    </Link>
   );
 }

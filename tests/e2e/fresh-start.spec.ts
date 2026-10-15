@@ -12,10 +12,10 @@ test('first launch: sign-in screen, "continue without signing in" works', async 
   await page.getByRole('button', { name: 'Увійти' }).click();
   await expect(page.getByRole('alert')).toHaveText('Введи email і пароль');
   await page.getByRole('button', { name: /Продовжити без входу/ }).click();
-  await expect(page.getByRole('heading', { name: /Привіт/ })).toBeVisible();
+  await expect(page.getByText(/^Привіт, /)).toBeVisible();
   // Remembered across launches.
   await page.reload();
-  await expect(page.getByRole('heading', { name: /Привіт/ })).toBeVisible();
+  await expect(page.getByText(/^Привіт, /)).toBeVisible();
 });
 
 test('first launch: empty, real defaults (400 / 50, card 15 961, no advance)', async ({ page }) => {
