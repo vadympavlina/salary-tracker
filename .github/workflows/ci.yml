@@ -17,10 +17,6 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  # Project pages are served from /<repo-name>/
-  BASE_PATH: /${{ github.event.repository.name }}/
-
 jobs:
   test:
     name: Test (unit, e2e, responsive)

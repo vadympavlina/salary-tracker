@@ -5,9 +5,9 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 
-// GitHub Pages project sites live under /<repo>/. The deploy workflow sets
-// BASE_PATH from the repository name; locally we default to the same value.
-const base = process.env.BASE_PATH ?? '/salary-tracker/';
+// Relative asset paths: the same build works on its own domain (salary.edvault.online)
+// and under a sub-folder (vadympavlina.github.io/salary-tracker/). BASE_PATH overrides it.
+const base = process.env.BASE_PATH ?? './';
 
 /** Content hash of everything in public/ (icons, splash screens, manifest). */
 function publicHash(): string {

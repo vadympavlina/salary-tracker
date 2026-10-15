@@ -5,7 +5,7 @@ import './styles/base.css';
 import './styles/components.css';
 import './styles/layout.css';
 import { App } from './App';
-import { RouterProvider } from './router/router';
+import { APP_BASE, RouterProvider } from './router/router';
 import { SalaryProvider } from './hooks/useSalaryStore';
 import { ToastProvider } from './components/ui/Toast';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
@@ -31,7 +31,7 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
     const hadController = !!navigator.serviceWorker.controller;
     navigator.serviceWorker
-      .register(`${import.meta.env.BASE_URL}sw.js`, { scope: import.meta.env.BASE_URL })
+      .register(`${APP_BASE}/sw.js`, { scope: `${APP_BASE}/` })
       .then((reg) => {
         // Home-screen apps are rarely reloaded: look for a new deploy whenever the app comes back.
         document.addEventListener('visibilitychange', () => {

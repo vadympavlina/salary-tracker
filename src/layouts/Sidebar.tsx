@@ -1,5 +1,5 @@
 import { Plus } from 'lucide-react';
-import { Link, useRouter } from '../router/router';
+import { APP_BASE, Link, useRouter } from '../router/router';
 import { NAV_ITEMS } from './navItems';
 import { useSalary } from '../hooks/useSalaryStore';
 
@@ -15,7 +15,7 @@ export function Sidebar() {
   return (
     <aside className="sidebar">
       <Link to="/" className="sidebar__brand">
-        <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" width={36} height={36} />
+        <img src={`${APP_BASE}/favicon.svg`} alt="" width={36} height={36} />
         <span>Зарплата</span>
       </Link>
       <Link to="/calculate?new=1" className="btn btn--primary btn--md btn--block sidebar__cta">

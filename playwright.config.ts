@@ -8,7 +8,7 @@ import { defineConfig, devices, type Project } from '@playwright/test';
  */
 const chromiumLaunch = process.env.CHROMIUM_PATH ? { launchOptions: { executablePath: process.env.CHROMIUM_PATH } } : {};
 const withWebkit = !!process.env.CI || !!process.env.PW_WEBKIT;
-const base = process.env.BASE_PATH ?? '/salary-tracker/';
+const base = process.env.URL_PATH ?? '/';
 const url = `http://localhost:4173${base}`;
 
 const chromium = (name: string, use: Project['use']): Project => ({

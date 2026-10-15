@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
 import { authErrorMessage, useCloud } from '../hooks/useCloud';
+import { APP_BASE } from '../router/router';
 import { Button } from '../components/ui/Button';
 import { TextInput } from '../components/ui/fields';
 import { useToast } from '../components/ui/Toast';
@@ -48,7 +49,7 @@ export function LoginPage() {
   return (
     <main className="login" id="main">
       <form className="login__card card" onSubmit={submit} noValidate>
-        <img className="login__logo" src={`${import.meta.env.BASE_URL}icons/appicon-192.png`} alt="" width={72} height={72} />
+        <img className="login__logo" src={`${APP_BASE}/icons/appicon-192.png`} alt="" width={72} height={72} />
         <h1 className="login__title">Зарплата</h1>
         <p className="login__subtitle">Увійди, щоб розрахунки зберігались у хмарі й були на всіх пристроях</p>
 

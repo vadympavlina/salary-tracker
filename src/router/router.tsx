@@ -2,13 +2,28 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 
 /**
  * Tiny hash router (~1 KB): every screen lives under the same real file
- * (/salary-tracker/#/history …), so GitHub Pages always answers 200 OK.
+ * (https://salary.edvault.online/#/history …), so the host always answers 200 OK.
  * That matters on iPhone: "Add to Home Screen" re-loads the current URL to find
  * the icon, and a path URL answered by 404.html made iOS drop the icon.
  */
-const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
+const ROUTE_TAIL = /\/(calculate|history|analytics|settings)(\/.*)?$/;
 
-// Old path-style links (/salary-tracker/settings) still work: turn them into #/settings.
+/**
+ * Folder the app is served from, without the trailing slash: '' on its own domain,
+ * '/salary-tracker' on GitHub Pages. Read at runtime because the build uses relative
+ * asset paths, so the very same files work on either address.
+ */
+function appBase(): string {
+  if (typeof window === 'undefined') return '';
+  const path = window.location.pathname;
+  const route = path.match(ROUTE_TAIL);
+  return route ? path.slice(0, route.index) : path.replace(/\/[^/]*$/, '');
+}
+
+export const APP_BASE = appBase();
+const BASE = APP_BASE;
+
+// Old path-style links (/settings, /history/…) still work: turn them into #/settings.
 if (typeof window !== 'undefined') {
   const rest = window.location.pathname.startsWith(BASE) ? window.location.pathname.slice(BASE.length) : '';
   const legacy = rest.replace(/\/+$/, '').replace(/^\/index\.html$/, '');

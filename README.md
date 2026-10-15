@@ -11,7 +11,7 @@
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173/salary-tracker/
+npm run dev        # http://localhost:5173/
 npm test           # unit-тести розрахунків і сховища
 npm run build      # production-збірка в dist/
 npm run test:e2e   # e2e + responsive на 11+ пристроях (потрібна збірка)
