@@ -11,32 +11,34 @@ const pub = (p) => new URL(`../public/${p}`, import.meta.url).pathname;
 mkdirSync(pub('icons'), { recursive: true });
 
 // Vector favicon for modern browsers + Safari pinned tab (monochrome).
-writeFileSync(pub('favicon.svg'), faviconIcon({ small: false, radius: 0 }) + '\n');
+writeFileSync(pub('favicon.svg'), faviconIcon({ small: false }) + '\n');
 writeFileSync(pub('icons/safari-pinned-tab.svg'), pinnedTabIcon() + '\n');
 
 const tmp = join(tmpdir(), `salary-icons-${process.pid}`);
 mkdirSync(tmp, { recursive: true });
 
 // [file, size, svg, transparent background?]
-// Every PNG is a full-bleed opaque square (no alpha channel): iOS and Android add their own
-// rounded mask, and some launchers show transparent pixels as black or reject the icon.
+// Rounded (squircle, transparent corners) where nothing else shapes the icon: browser tabs and
+// installed desktop apps. Full-bleed opaque squares where the OS applies its own mask — a
+// transparent corner there turns black (iOS) or gets cut twice (Android adaptive icons).
 const png = [
   // Browser tab: simplified wallet that stays legible at 16–32px.
-  ['icons/favicon-16.png', 16, faviconIcon({ radius: 0 }), false],
-  ['icons/favicon-32.png', 32, faviconIcon({ radius: 0 }), false],
-  ['icons/appicon-192.png', 192, appIcon({ radius: 0 }), false],
-  ['icons/appicon-512.png', 512, appIcon({ radius: 0 }), false],
-  // New file name on purpose: iOS remembers failed icon URLs, a fresh one is always fetched.
-  ['icons/apple-icon-180.png', 180, appIcon({ radius: 0 }), false],
-  // Android adaptive icons: coin inside the 80% safe-zone circle, full bleed.
-  ['icons/app-maskable-192.png', 192, appIcon({ radius: 0, scale: 0.8 }), false],
-  ['icons/app-maskable-512.png', 512, appIcon({ radius: 0, scale: 0.8 }), false],
+  ['icons/favicon-16.png', 16, faviconIcon(), true],
+  ['icons/favicon-32.png', 32, faviconIcon(), true],
+  // Manifest "any" icons (Chrome/Edge/macOS install, Android without adaptive icons).
+  ['icons/icon-round-192.png', 192, appIcon(), true],
+  ['icons/icon-round-512.png', 512, appIcon(), true],
+  // iPhone / iPad home screen: iOS rounds it itself.
+  ['icons/apple-icon-180.png', 180, appIcon({ rounded: false }), false],
+  // Android adaptive icons: wallet inside the 80% safe zone, full bleed.
+  ['icons/app-maskable-192.png', 192, appIcon({ rounded: false, scale: 0.8 }), false],
+  ['icons/app-maskable-512.png', 512, appIcon({ rounded: false, scale: 0.8 }), false],
   // Windows start-menu tile.
-  ['icons/mstile-150.png', 150, appIcon({ radius: 0, scale: 0.9 }), false],
+  ['icons/mstile-150.png', 150, appIcon({ rounded: false, scale: 0.9 }), false],
   // Sources for favicon.ico
-  [join(tmp, 'ico-16.png'), 16, faviconIcon({ radius: 0 }), false],
-  [join(tmp, 'ico-32.png'), 32, faviconIcon({ radius: 0 }), false],
-  [join(tmp, 'ico-48.png'), 48, faviconIcon({ small: false, radius: 0 }), false],
+  [join(tmp, 'ico-16.png'), 16, faviconIcon(), true],
+  [join(tmp, 'ico-32.png'), 32, faviconIcon(), true],
+  [join(tmp, 'ico-48.png'), 48, faviconIcon({ small: false }), true],
 ];
 
 const executablePath = process.env.CHROMIUM_PATH ?? '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
@@ -56,7 +58,7 @@ execFileSync('python3', [
   '-c',
   `import sys
 from PIL import Image
-imgs=[Image.open(p).convert('RGB') for p in sys.argv[2:]]
+imgs=[Image.open(p).convert('RGBA') for p in sys.argv[2:]]
 imgs[-1].save(sys.argv[1], format='ICO', sizes=[i.size for i in imgs], append_images=imgs[:-1])`,
   pub('favicon.ico'),
   join(tmp, 'ico-16.png'),
@@ -65,14 +67,16 @@ imgs[-1].save(sys.argv[1], format='ICO', sizes=[i.size for i in imgs], append_im
 ]);
 rmSync(tmp, { recursive: true, force: true });
 
-// Drop the alpha channel and losslessly shrink PNGs.
+// Losslessly shrink PNGs; full-bleed ones lose the alpha channel entirely.
 execFileSync('python3', [
   '-I',
   '-c',
   `import sys
 from PIL import Image
-for p in sys.argv[1:]:
-    Image.open(p).convert('RGB').save(p, optimize=True)`,
-  ...png.filter(([f]) => !f.startsWith('/')).map(([f]) => pub(f)),
+for arg in sys.argv[1:]:
+    p, keep_alpha = arg.rsplit('|', 1)
+    im = Image.open(p)
+    (im.convert('RGBA') if keep_alpha == '1' else im.convert('RGB')).save(p, optimize=True)`,
+  ...png.filter(([f]) => !f.startsWith('/')).map(([f, , , t]) => `${pub(f)}|${t ? 1 : 0}`),
 ]);
 console.log('icons generated');

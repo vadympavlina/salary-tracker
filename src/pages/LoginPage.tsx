@@ -49,7 +49,7 @@ export function LoginPage() {
   return (
     <main className="login" id="main">
       <form className="login__card card" onSubmit={submit} noValidate>
-        <img className="login__logo" src={`${APP_BASE}/icons/appicon-192.png`} alt="" width={72} height={72} />
+        <img className="login__logo" src={`${APP_BASE}/icons/icon-round-192.png`} alt="" width={72} height={72} />
         <h1 className="login__title">Зарплата</h1>
         <p className="login__subtitle">Увійди, щоб розрахунки зберігались у хмарі й були на всіх пристроях</p>
 

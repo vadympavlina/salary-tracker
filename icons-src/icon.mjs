@@ -60,22 +60,44 @@ function wallet({ small = false } = {}) {
 }
 
 /**
- * Full app icon. `radius` 0 = full-bleed square (iOS / maskable / tiles);
- * `scale` shrinks the wallet to fit a safe zone; `small` = simplified art for tiny sizes.
+ * Apple-style "squircle" (superellipse, n=6): smoother, more continuous corners than a
+ * rounded rectangle — the shape iOS uses for app icons.
  */
-export function appIcon({ radius = 114, scale = 1, small = false } = {}) {
+function squircle(size = 512, n = 6, steps = 240) {
+  const r = size / 2;
+  const pts = [];
+  for (let i = 0; i < steps; i++) {
+    const t = (i / steps) * Math.PI * 2;
+    const c = Math.cos(t);
+    const sn = Math.sin(t);
+    const x = r + r * Math.sign(c) * Math.abs(c) ** (2 / n);
+    const y = r + r * Math.sign(sn) * Math.abs(sn) ** (2 / n);
+    pts.push(`${x.toFixed(2)} ${y.toFixed(2)}`);
+  }
+  return `M${pts.join('L')}Z`;
+}
+
+/**
+ * Full app icon. `rounded` false = full-bleed opaque square (iOS home screen, Android maskable,
+ * tiles: the OS cuts its own shape); true = squircle on a transparent background (browser tab,
+ * installed desktop app). `scale` shrinks the wallet to fit a safe zone; `small` = simplified art.
+ */
+export function appIcon({ rounded = true, scale = 1, small = false } = {}) {
   const s = scale;
+  const clip = rounded ? ' clip-path="url(#shape)"' : '';
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <defs>${defs}</defs>
-  <rect width="512" height="512" rx="${radius}" fill="url(#bg)"/>
-  ${small ? '' : `<rect width="512" height="256" rx="${radius}" fill="url(#sheen)"/>`}
+  <defs>${defs}${rounded ? `<clipPath id="shape"><path d="${squircle()}"/></clipPath>` : ''}</defs>
+  <g${clip}>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  ${small ? '' : '<rect width="512" height="256" fill="url(#sheen)"/>'}
   <g transform="translate(${256 * (1 - s)} ${256 * (1 - s)}) scale(${s})">${wallet({ small })}</g>
+  </g>
 </svg>`;
 }
 
 /** Browser-tab favicon: simplified wallet on a rounded tile, legible at 16–48px. */
-export function faviconIcon({ small = true, radius = 120 } = {}) {
-  return appIcon({ radius, small });
+export function faviconIcon({ small = true, rounded = true } = {}) {
+  return appIcon({ rounded, small });
 }
 
 /** Monochrome mask for Safari pinned tabs. */
