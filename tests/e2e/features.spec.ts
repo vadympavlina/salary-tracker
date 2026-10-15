@@ -180,3 +180,37 @@ test('history: swipe a month tile left → Змінити / Видалити, de
   await expect(page.locator('.swipe').first()).toHaveClass(/swipe--open/);
   await expect(rows).toHaveCount(6);
 });
+
+test('home counter: one row per rate line, ± changes only that line; follows the chosen month', async ({ page }) => {
+  const assertNoErrors = trackErrors(page);
+  // This month gets a second pair rate with a comment.
+  await page.goto('#/calculate?new=1');
+  await appReady(page);
+  await page.getByRole('button', { name: 'Інша ставка: пари' }).click();
+  await field(page, 'Кількість пар (ставка 2)').fill('2');
+  await field(page, 'Ставка за пару 2').fill('400');
+  await field(page, 'Коментар: пари, ставка 2').fill('Група А');
+  await page.getByRole('button', { name: 'Розрахувати' }).click();
+  await page.getByRole('button', { name: 'Зберегти' }).click();
+  await expect(page.getByText('Розрахунок успішно збережено')).toBeVisible();
+
+  await page.goto('./');
+  await appReady(page);
+  const rows = page.locator('.counter .counter__row');
+  await expect(rows).toHaveCount(3); // pairs ×2 rates + videos
+  const first = rows.nth(0).locator('.counter__value');
+  const before = Number((await first.innerText()).replace(/\D/g, ''));
+  await page.getByRole('button', { name: 'Пари · Група А: плюс один' }).click();
+  await expect(rows.nth(1).locator('.counter__value')).toContainText('3');
+  await expect(first).toContainText(String(before));
+  await expect(rows.nth(1)).toContainText(`× ${uah('400')} · ${uah('1 200')}`);
+
+  // Choosing another month above the card switches the counter to that month.
+  await page.getByRole('radio', { name: /Серпень/ }).click();
+  await expect(page.getByRole('heading', { name: 'Серпень 2026' })).toBeVisible();
+  const aug = page.locator('.counter .counter__row').first().locator('.counter__value');
+  const augBefore = Number((await aug.innerText()).replace(/\D/g, ''));
+  await page.getByRole('button', { name: 'Пари: плюс один' }).click();
+  await expect(aug).toContainText(String(augBefore + 1));
+  assertNoErrors();
+});

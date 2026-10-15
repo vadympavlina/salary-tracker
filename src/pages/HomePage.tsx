@@ -83,7 +83,7 @@ export function HomePage() {
             <MonthChips records={records} selected={selected} onPick={setPicked} />
             <SalaryCard record={selected} calc={calc} change={change} to={`/history/${selected.id}`} variant="dark" />
           </div>
-          <MonthCounter />
+          <MonthCounter period={selected.period} />
           {waiting.length > 0 && <WaitingBanner records={waiting} />}
         </div>
         <div className="dashboard__side stack">

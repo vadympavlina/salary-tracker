@@ -42,7 +42,8 @@ interface SalaryStore extends AppData {
   /** Creates or updates a record. One record per month: saving over an existing month replaces it. */
   saveRecord: (input: SalaryInput, editId?: string) => Promise<SalaryRecord>;
   /** +1 / −1 pair or video on the current month (creates the month if needed). */
-  bumpCurrentMonth: (kind: 'pairs' | 'videos', delta: number) => Promise<SalaryRecord>;
+  /** ±1 on a month's pairs/videos (default: this month, latest rate line); creates the month if needed. */
+  bumpCurrentMonth: (kind: 'pairs' | 'videos', delta: number, opts?: { period?: string; line?: number }) => Promise<SalaryRecord>;
   deleteRecord: (id: string) => Promise<SalaryRecord | undefined>;
   restoreRecord: (record: SalaryRecord) => Promise<void>;
   updateSettings: (patch: Partial<SalarySettings>) => Promise<void>;
@@ -204,10 +205,10 @@ export function SalaryProvider({ children }: { children: ReactNode }) {
   );
 
   const bumpCurrentMonth = useCallback(
-    (kind: 'pairs' | 'videos', delta: number) =>
+    (kind: 'pairs' | 'videos', delta: number, opts: { period?: string; line?: number } = {}) =>
       serial(async () => {
         const { records, settings } = ref.current;
-        const period = currentPeriod();
+        const period = opts.period ?? currentPeriod();
         const existing = records.find((r) => r.period === period);
         const base: SalaryInput = existing ?? {
           period,
@@ -222,7 +223,12 @@ export function SalaryProvider({ children }: { children: ReactNode }) {
         const key = kind === 'pairs' ? 'pairItems' : 'videoItems';
         const lines = base[key].map((l) => ({ ...l }));
         // +1 goes to the latest rate; −1 comes off the latest line that still has something.
-        const idx = delta > 0 ? lines.length - 1 : lines.map((l) => l.count > 0).lastIndexOf(true);
+        const idx =
+          opts.line !== undefined && opts.line < lines.length
+            ? opts.line
+            : delta > 0
+              ? lines.length - 1
+              : lines.map((l) => l.count > 0).lastIndexOf(true);
         if (idx >= 0) lines[idx].count = Math.max(0, lines[idx].count + delta);
         const record = buildRecord({ ...base, [key]: lines }, existing);
         await commitRecords([...records.filter((r) => r.id !== record.id), record]);

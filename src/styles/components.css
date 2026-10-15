@@ -1052,3 +1052,5 @@ html.modal-open { overflow: hidden; }
 @media (min-width: 1024px) {
   .month-chips { margin: 0; padding: 2px 0; }
 }
+.counter__label b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.counter__footer { display: flex; justify-content: space-between; gap: 12px; }

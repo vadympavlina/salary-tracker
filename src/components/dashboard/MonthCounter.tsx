@@ -2,7 +2,8 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { CirclePlay, Minus, Plus, UsersRound } from 'lucide-react';
 import { useSalary } from '../../hooks/useSalaryStore';
 import { calculateSalary } from '../../services/calculations/salaryCalculator';
-import { currentPeriod, formatMonth } from '../../utils/period';
+import { currentPeriod, formatMonth, formatPeriod } from '../../utils/period';
+import type { RateLine } from '../../types/salary';
 import { formatNumber, formatUAH, plural } from '../../utils/format';
 import { Link } from '../../router/router';
 import { useToast } from '../ui/Toast';
@@ -11,25 +12,46 @@ import { Group, Tile } from '../ui/List';
 type Kind = 'pairs' | 'videos';
 
 /**
- * Running tally for the current month: tap +1 after each class / checked video,
- * so the month is already filled in when it's time to calculate.
+ * Quick tally under the home card: one row per rate line of the month (pairs at 350 ₴, pairs at
+ * 400 ₴ "Група А", videos …) with −/+ on each, so a month with several rates is counted right.
+ * Defaults to the current month; tapping +1 there creates the month if it doesn't exist yet.
  */
-export function MonthCounter() {
+export function MonthCounter({ period = currentPeriod() }: { period?: string }) {
   const { findByPeriod, bumpCurrentMonth, settings } = useSalary();
-  const period = currentPeriod();
   const record = findByPeriod(period);
   const calc = record ? calculateSalary(record) : undefined;
-  const pairs = calc?.pairs ?? 0;
-  const videos = calc?.videos ?? 0;
-  // The counter adds to the month's last rate line, so that is the rate shown.
-  const pairRate = record?.pairItems[record.pairItems.length - 1]?.rate ?? settings.pairRate;
-  const videoRate = record?.videoItems[record.videoItems.length - 1]?.rate ?? settings.videoRate;
+  const isCurrent = period === currentPeriod();
+  const pairLines = record?.pairItems.length ? record.pairItems : [{ count: 0, rate: settings.pairRate }];
+  const videoLines = record?.videoItems.length ? record.videoItems : [{ count: 0, rate: settings.videoRate }];
+  const total = (calc?.pairIncome ?? 0) + (calc?.videoIncome ?? 0);
+
+  const rows = (kind: Kind, lines: RateLine[]) =>
+    lines.map((l, i) => {
+      const base = kind === 'pairs' ? 'Пари' : 'Відео';
+      const label = l.note ? `${base} · ${l.note}` : lines.length > 1 ? `${base} · ставка ${i + 1}` : base;
+      return (
+        <CounterRow
+          key={`${kind}-${i}`}
+          kind={kind}
+          label={label}
+          forms={kind === 'pairs' ? ['пара', 'пари', 'пар'] : ['відео', 'відео', 'відео']}
+          value={l.count}
+          detail={`× ${formatUAH(l.rate)} · ${formatUAH(l.count * l.rate)}`}
+          icon={
+            <Tile color={kind === 'pairs' ? 'violet' : 'blue'}>
+              {kind === 'pairs' ? <UsersRound size={17} strokeWidth={2.4} /> : <CirclePlay size={17} strokeWidth={2.4} />}
+            </Tile>
+          }
+          onBump={(k, delta) => bumpCurrentMonth(k, delta, { period, line: i })}
+        />
+      );
+    });
 
   return (
     <Group
       className="counter"
       id="counter"
-      title={`Цей місяць · ${formatMonth(period)}`}
+      title={isCurrent ? `Цей місяць · ${formatMonth(period)}` : formatPeriod(period)}
       action={
         record ? (
           <Link to={`/history/${record.id}`} className="link">
@@ -37,9 +59,15 @@ export function MonthCounter() {
           </Link>
         ) : undefined
       }
+      footer={
+        <span className="counter__footer">
+          <span>За пари й відео</span>
+          <b className="num">{formatUAH(total)}</b>
+        </span>
+      }
     >
-      <CounterRow kind="pairs" label="Пари" forms={['пара', 'пари', 'пар']} value={pairs} detail={`× ${formatUAH(pairRate)} · ${formatUAH(calc?.pairIncome ?? 0)}`} icon={<Tile color="violet"><UsersRound size={17} strokeWidth={2.4} /></Tile>} onBump={bumpCurrentMonth} />
-      <CounterRow kind="videos" label="Відео" forms={['відео', 'відео', 'відео']} value={videos} detail={`× ${formatUAH(videoRate)} · ${formatUAH(calc?.videoIncome ?? 0)}`} icon={<Tile color="blue"><CirclePlay size={17} strokeWidth={2.4} /></Tile>} onBump={bumpCurrentMonth} />
+      {rows('pairs', pairLines)}
+      {rows('videos', videoLines)}
     </Group>
   );
 }
