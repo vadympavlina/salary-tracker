@@ -54,7 +54,32 @@ function lines(items: unknown, legacyCount: unknown, legacyRate: unknown): RateL
   return [{ count: num(legacyCount), rate: num(legacyRate) }];
 }
 
+const strings = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []);
+
 const isPeriod = (v: unknown): v is string => typeof v === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(v);
+
+/**
+ * A change timestamp that is always later than `after`, even when this device's clock is behind
+ * the device that wrote `after` — otherwise last-write-wins sync would silently undo the edit.
+ */
+export function stamp(...after: (string | undefined)[]): string {
+  let t = Date.now();
+  for (const a of after) {
+    const ms = a ? Date.parse(a) : NaN;
+    if (!Number.isNaN(ms) && ms >= t) t = ms + 1;
+  }
+  return new Date(t).toISOString();
+}
+
+/** One record per month: keeps the most recently changed one. */
+export function dedupeByPeriod(records: SalaryRecord[]): SalaryRecord[] {
+  const byPeriod = new Map<string, SalaryRecord>();
+  for (const r of records) {
+    const prev = byPeriod.get(r.period);
+    if (!prev || r.updatedAt > prev.updatedAt) byPeriod.set(r.period, r);
+  }
+  return [...byPeriod.values()];
+}
 
 /** Builds a full record (with derived status) from inputs. */
 export function buildRecord(input: SalaryInput, existing?: SalaryRecord): SalaryRecord {
@@ -63,7 +88,7 @@ export function buildRecord(input: SalaryInput, existing?: SalaryRecord): Salary
     ...input,
     id: existing?.id ?? uid(),
     createdAt: existing?.createdAt ?? now,
-    updatedAt: now,
+    updatedAt: stamp(existing?.updatedAt),
     status: calculateSalary(input).status,
   };
 }
@@ -147,7 +172,7 @@ export function createSalaryStorage(adapter: StorageAdapter = new LocalStorageAd
         ? rawRecords.map(normalizeRecord).filter((r): r is SalaryRecord => r !== null)
         : [];
       return {
-        records: sortRecords(records),
+        records: sortRecords(dedupeByPeriod(records)),
         settings: normalizeSettings(await adapter.get(STORAGE_KEYS.settings)),
         profile: normalizeProfile(await adapter.get(STORAGE_KEYS.profile)),
       };
@@ -169,6 +194,8 @@ export function createSalaryStorage(adapter: StorageAdapter = new LocalStorageAd
         tombstones: s?.tombstones && typeof s.tombstones === 'object' ? s.tombstones : {},
         settingsAt: typeof s?.settingsAt === 'string' ? s.settingsAt : EPOCH,
         profileAt: typeof s?.profileAt === 'string' ? s.profileAt : EPOCH,
+        settingsFields: strings(s?.settingsFields),
+        profileFields: strings(s?.profileFields),
       };
     },
 
@@ -227,7 +254,7 @@ export function parseImport(text: string): AppData {
   const records = rawRecords.map(normalizeRecord).filter((r): r is SalaryRecord => r !== null);
   if (rawRecords.length > 0 && records.length === 0) throw new ImportError('Не вдалося прочитати жодного запису.');
   return {
-    records: sortRecords(records),
+    records: sortRecords(dedupeByPeriod(records)),
     settings: normalizeSettings(Array.isArray(json) ? undefined : obj.settings),
     profile: normalizeProfile(Array.isArray(json) ? undefined : obj.profile),
   };

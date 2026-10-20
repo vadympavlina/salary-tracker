@@ -24,8 +24,26 @@ function publicHash(): string {
 }
 
 /**
+ * GitHub Pages answers unknown paths with 404.html. Old path-style links (/history/abc,
+ * /salary-tracker/settings) are sent to the hash route of the app folder they belong to.
+ * A copy of index.html can't do this: its relative ./assets paths break one folder deeper.
+ */
+const NOT_FOUND_HTML = `<!doctype html><html lang="uk"><head><meta charset="utf-8"><title>Зарплата</title>
+<meta name="viewport" content="width=device-width, initial-scale=1"><script>
+(function () {
+  var p = location.pathname, m = p.match(/\\/(calculate|history|analytics|settings)(\\/.*)?$/);
+  if (m) location.replace(p.slice(0, m.index) + '/#' + p.slice(m.index).replace(/\\/+$/, '') + location.search);
+  else {
+    var up = p.replace(/\\/[^/]*\\/?$/, '/') || '/';
+    if (up !== p) location.replace(up); // one folder up; stops at / (never loops)
+  }
+})();
+</script></head><body></body></html>
+`;
+
+/**
  * Production-only helpers for GitHub Pages:
- * - 404.html is a copy of index.html, so deep links / refreshes boot the SPA.
+ * - 404.html forwards legacy path links to the hash routes.
  * - sw.js is generated with the hashed asset list for offline precaching.
  */
 function pagesAndServiceWorker(): Plugin {
@@ -38,7 +56,10 @@ function pagesAndServiceWorker(): Plugin {
       const files = Object.keys(bundle).filter((f) => !f.endsWith('.map') && f !== 'index.html');
       const precache = ['./', ...files];
       // Changes whenever code OR any icon/splash/manifest changes, so the SW (and its cache) refreshes.
-      const version = createHash('sha1').update(files.sort().join('|')).update(assetsVersion).digest('hex').slice(0, 10);
+      const index = bundle['index.html'];
+      const html = index && index.type === 'asset' ? String(index.source) : '';
+      // Head-only edits (viewport, metas, theme script) must also produce a new SW, or offline users keep the old shell.
+      const version = createHash('sha1').update(files.sort().join('|')).update(assetsVersion).update(html).digest('hex').slice(0, 10);
       const template = readFileSync(new URL('./sw/sw.template.js', import.meta.url), 'utf8');
       this.emitFile({
         type: 'asset',
@@ -47,10 +68,7 @@ function pagesAndServiceWorker(): Plugin {
           .replace('__VERSION__', version)
           .replace('__PRECACHE__', JSON.stringify(precache)),
       });
-      const index = bundle['index.html'];
-      if (index && index.type === 'asset') {
-        this.emitFile({ type: 'asset', fileName: '404.html', source: index.source });
-      }
+      this.emitFile({ type: 'asset', fileName: '404.html', source: NOT_FOUND_HTML });
     },
   };
 }

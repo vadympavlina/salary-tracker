@@ -63,25 +63,17 @@ export function mergeWithRemote(local: LocalState, remote: RemoteData): MergeRes
     }
   }
 
-  let settings = local.settings;
-  let settingsAt = local.sync.settingsAt;
-  if (remote.settings && (!settingsAt || remote.settings.updatedAt > settingsAt)) {
-    settings = normalizeSettings(remote.settings.data);
-    settingsAt = remote.settings.updatedAt;
-    localChanged = true;
-  } else if (settingsAt && (!remote.settings || settingsAt > remote.settings.updatedAt)) {
-    updates.settings = clean({ data: settings, updatedAt: settingsAt });
-  }
-
-  let profile = local.profile;
-  let profileAt = local.sync.profileAt;
-  if (remote.profile && (!profileAt || remote.profile.updatedAt > profileAt)) {
-    profile = normalizeProfile(remote.profile.data);
-    profileAt = remote.profile.updatedAt;
-    localChanged = true;
-  } else if (profileAt && (!remote.profile || profileAt > remote.profile.updatedAt)) {
-    updates.profile = clean({ data: profile, updatedAt: profileAt });
-  }
+  // Settings / profile: last write wins, but a local edit only carries the fields it actually
+  // changed — a fresh device that switched the theme must not reset the cloud's rates to defaults.
+  const settingsSide = mergeObject(local.settings, local.sync.settingsAt, local.sync.settingsFields, remote.settings, normalizeSettings);
+  const profileSide = mergeObject(local.profile, local.sync.profileAt, local.sync.profileFields, remote.profile, normalizeProfile);
+  if (settingsSide.upload) updates.settings = clean({ data: settingsSide.value, updatedAt: settingsSide.at });
+  if (profileSide.upload) updates.profile = clean({ data: profileSide.value, updatedAt: profileSide.at });
+  if (settingsSide.changed || profileSide.changed) localChanged = true;
+  const settings = settingsSide.value;
+  const profile = profileSide.value;
+  const settingsAt = settingsSide.at;
+  const profileAt = profileSide.at;
 
   if (!localChanged) return { local, localChanged, updates };
   return {
@@ -89,11 +81,40 @@ export function mergeWithRemote(local: LocalState, remote: RemoteData): MergeRes
       records: [...byPeriod.values()].sort((a, b) => b.period.localeCompare(a.period)),
       settings,
       profile,
-      sync: { tombstones, settingsAt, profileAt },
+      sync: { tombstones, settingsAt, profileAt, settingsFields: settingsSide.fields, profileFields: profileSide.fields },
     },
     localChanged,
     updates,
   };
+}
+
+interface Side<T> {
+  value: T;
+  at: string | undefined;
+  fields: string[] | undefined;
+  /** Local value or its sync bookkeeping changed. */
+  changed: boolean;
+  upload: boolean;
+}
+
+function mergeObject<T extends object>(
+  mine: T,
+  mineAt: string | undefined,
+  fields: string[] | undefined,
+  theirs: { data: unknown; updatedAt: string } | undefined,
+  normalize: (raw: unknown) => T,
+): Side<T> {
+  if (theirs && (!mineAt || theirs.updatedAt > mineAt)) {
+    // Cloud is newer → take it (and forget pending local field edits, they are older).
+    return { value: normalize(theirs.data), at: theirs.updatedAt, fields: [], changed: true, upload: false };
+  }
+  if (mineAt && (!theirs || mineAt > theirs.updatedAt)) {
+    if (!theirs || !fields?.length) return { value: mine, at: mineAt, fields: [], changed: !!fields?.length, upload: true };
+    const picked = Object.fromEntries(fields.filter((k) => k in mine).map((k) => [k, (mine as Record<string, unknown>)[k]]));
+    const value = normalize({ ...(normalize(theirs.data) as object), ...picked });
+    return { value, at: mineAt, fields: [], changed: true, upload: true };
+  }
+  return { value: mine, at: mineAt, fields, changed: false, upload: false };
 }
 
 /** Applies a path-keyed update to a RemoteData copy (keeps the in-memory cloud mirror current). */

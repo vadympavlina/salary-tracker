@@ -25,6 +25,9 @@ export interface SyncMeta {
   tombstones: Record<string, string>;
   settingsAt?: string;
   profileAt?: string;
+  /** Settings / profile fields edited here and not yet uploaded: only these override the cloud copy. */
+  settingsFields?: string[];
+  profileFields?: string[];
 }
 
 /** Path-keyed partial update, e.g. { "records/2026-10": {...}, "settings": {...} }. */

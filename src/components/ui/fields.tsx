@@ -64,11 +64,36 @@ function useCaretKeeper(display: string) {
     el.setSelectionRange(pos, pos);
     digitsBefore.current = null;
   }, [display]);
-  const remember = (el: HTMLInputElement) => {
-    const caret = el.selectionStart ?? el.value.length;
-    digitsBefore.current = el.value.slice(0, caret).replace(/[^\d.,]/g, '').length;
+  /**
+   * Shared onChange for formatted number fields:
+   * - Backspace/Delete on a thousands space deletes the digit next to it (as people expect),
+   *   instead of "doing nothing" and jumping the caret to the end;
+   * - input that is rejected (over the limit, letters, extra zeros) is put back exactly as it was —
+   *   React/Preact would otherwise leave the typed text on screen while the value stays old.
+   */
+  const change = (e: { currentTarget: HTMLInputElement; nativeEvent: Event }, current: string, decimal: boolean, max: number, onChange: (raw: string) => void) => {
+    const el = e.currentTarget;
+    let text = el.value;
+    let caret = el.selectionStart ?? text.length;
+    if (text.length === display.length - 1 && sanitizeAmount(text, decimal) === current) {
+      const forward = (e.nativeEvent as InputEvent).inputType === 'deleteContentForward';
+      if (forward) text = text.slice(0, caret) + text.slice(caret + 1);
+      else if (caret > 0) {
+        text = text.slice(0, caret - 1) + text.slice(caret);
+        caret -= 1;
+      }
+    }
+    const raw = sanitizeAmount(text, decimal);
+    if (raw === current || toNumber(raw) > max) {
+      const back = Math.max(0, caret - Math.max(0, el.value.length - display.length));
+      el.value = display;
+      el.setSelectionRange(back, back);
+      return;
+    }
+    digitsBefore.current = text.slice(0, caret).replace(/[^\d.,]/g, '').length;
+    onChange(raw);
   };
-  return { ref, remember };
+  return { ref, change };
 }
 
 interface AmountProps {
@@ -88,7 +113,7 @@ interface AmountProps {
 export function CurrencyInput({ label, value, onChange, icon, hint, error, max = 10_000_000, placeholder = '0', suffix = '₴', trailing }: AmountProps) {
   const id = useId();
   const display = groupAmount(value);
-  const { ref, remember } = useCaretKeeper(display);
+  const { ref, change } = useCaretKeeper(display);
   return (
     <FieldShell id={id} label={label} icon={icon} hint={hint} error={error} trailing={trailing}>
       <div className="field__value-row">
@@ -104,12 +129,7 @@ export function CurrencyInput({ label, value, onChange, icon, hint, error, max =
           value={display}
           aria-invalid={!!error}
           aria-describedby={error || hint ? `${id}-msg` : undefined}
-          onChange={(e) => {
-            remember(e.target);
-            const raw = sanitizeAmount(e.target.value);
-            if (toNumber(raw) > max) return;
-            onChange(raw);
-          }}
+          onChange={(e) => change(e, value, true, max, onChange)}
           onFocus={(e) => e.currentTarget.select()}
         />
         {suffix && (
@@ -143,7 +163,7 @@ interface NumberProps {
 export function NumberInput({ label, value, onChange, icon, hint, error, max = 100_000, step = 1, suffix, decimal = false, stepper: withStepper = true, srSuffix }: NumberProps) {
   const id = useId();
   const display = suffix ? groupAmount(value) : value;
-  const { ref, remember } = useCaretKeeper(display);
+  const { ref, change } = useCaretKeeper(display);
   const valueRef = useRef(value);
   valueRef.current = value;
   const timer = useRef<number | undefined>(undefined);
@@ -230,12 +250,7 @@ export function NumberInput({ label, value, onChange, icon, hint, error, max = 1
           value={display}
           aria-invalid={!!error}
           aria-describedby={error || hint ? `${id}-msg` : undefined}
-          onChange={(e) => {
-            remember(e.target);
-            const raw = sanitizeAmount(e.target.value, decimal);
-            if (toNumber(raw) > max) return;
-            onChange(raw);
-          }}
+          onChange={(e) => change(e, value, decimal, max, onChange)}
           onFocus={(e) => e.currentTarget.select()}
         />
         {suffix && (

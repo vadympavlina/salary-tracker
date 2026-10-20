@@ -12,7 +12,15 @@ interface Props {
 export function AppLayout({ children, hideTabBar, pageKey }: Props) {
   return (
     <div className={`app${hideTabBar ? ' app--pushed' : ''}`}>
-      <a href="#main" className="skip-link">
+      {/* Not a "#main" link: with hash routing that would navigate to a "main" route. */}
+      <a
+        href="#main"
+        className="skip-link"
+        onClick={(e) => {
+          e.preventDefault();
+          document.getElementById('main')?.focus();
+        }}
+      >
         Перейти до вмісту
       </a>
       <Sidebar />

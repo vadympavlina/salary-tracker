@@ -21,7 +21,8 @@ export function RecordPage({ id }: { id: string }) {
   const toast = useToast();
   const [confirm, setConfirm] = useState(false);
   const record = getRecord(id);
-  const justSaved = (state as { saved?: boolean } | undefined)?.saved;
+  // The flag lives in history.state; only honour it right after the save, not when coming back later.
+  const justSaved = !!(state as { saved?: boolean } | undefined)?.saved && !!record && Date.now() - Date.parse(record.updatedAt) < 20_000;
 
   if (!record) {
     return (
@@ -45,6 +46,7 @@ export function RecordPage({ id }: { id: string }) {
   const remove = async () => {
     setConfirm(false);
     const removed = await deleteRecord(record.id);
+    // Replace, not back(): the entry behind this screen may be the edit form of the deleted month.
     navigate('/history', { replace: true });
     if (removed) {
       toast(`${title} видалено`, { tone: 'info', action: { label: 'Скасувати', onClick: () => restoreRecord(removed) } });
@@ -79,6 +81,8 @@ export function RecordPage({ id }: { id: string }) {
       <PageHeader
         title={title}
         backTo="/history"
+        // Right after saving, "back" means the list — not the form that was just submitted.
+        onBack={justSaved ? () => navigate('/history', { replace: true }) : undefined}
         actions={
           <IconButton label="Поділитися або скопіювати" onClick={share}>
             <Share2 size={19} />

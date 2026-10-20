@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { applyUpdates, mergeWithRemote, type LocalState } from '../services/cloud/merge';
-import { buildRecord } from '../services/storage/salaryStorage';
+import { buildRecord, parseImport, stamp } from '../services/storage/salaryStorage';
 import { DEFAULT_PROFILE, DEFAULT_SETTINGS } from '../data/defaults';
 import type { SalaryInput, SalaryRecord } from '../types/salary';
 
@@ -95,5 +95,42 @@ describe('mergeWithRemote', () => {
     const r = mergeWithRemote(local([{ ...rec('2026-10', 1, '2026-10-06T10:00:00Z'), note: undefined }]), {});
     expect(JSON.stringify(r.updates['records/2026-10'])).not.toContain('undefined');
     expect('note' in (r.updates['records/2026-10'] as object)).toBe(false);
+  });
+});
+
+describe('sync robustness', () => {
+  it('an edit on a device whose clock is behind still wins over the copy it edited', () => {
+    const future = new Date(Date.now() + 5 * 60_000).toISOString(); // written by a device 5 min ahead
+    const pulled = rec('2026-10', 5, future);
+    const edited = buildRecord({ ...input('2026-10', 6) }, pulled);
+    expect(edited.updatedAt > pulled.updatedAt).toBe(true);
+    const r = mergeWithRemote(local([edited]), { records: { '2026-10': pulled } });
+    expect(r.updates['records/2026-10']).toMatchObject({ pairItems: [{ count: 6 }] });
+  });
+
+  it('a deletion is stamped after the record it removes, even with a slow clock', () => {
+    const future = new Date(Date.now() + 5 * 60_000).toISOString();
+    expect(stamp(future) > future).toBe(true);
+    expect(stamp() <= new Date(Date.now() + 1000).toISOString()).toBe(true);
+  });
+
+  it('a settings edit on a fresh device only overrides the fields it changed', () => {
+    const cloud = { data: { ...DEFAULT_SETTINGS, pairRate: 999, defaultCard: 1234 }, updatedAt: '2026-10-01T00:00:00.000Z' };
+    const mine = { ...DEFAULT_SETTINGS, theme: 'dark' as const }; // fresh device: defaults + new theme
+    const state = { ...local([]), settings: mine };
+    state.sync = { ...state.sync, settingsAt: '2026-10-02T00:00:00.000Z', settingsFields: ['theme'] };
+    const r = mergeWithRemote(state, { settings: cloud });
+    const sent = (r.updates.settings as { data: typeof DEFAULT_SETTINGS }).data;
+    expect(sent).toMatchObject({ pairRate: 999, defaultCard: 1234, theme: 'dark' });
+    expect(r.local.settings).toMatchObject({ pairRate: 999, theme: 'dark' });
+    expect(r.local.sync.settingsFields).toEqual([]);
+  });
+
+  it('import and stored data keep one record per month (the newest)', () => {
+    const a = rec('2026-09', 1, '2026-10-01T00:00:00.000Z');
+    const b = { ...rec('2026-09', 7, '2026-10-05T00:00:00.000Z'), id: 'other' };
+    const parsed = parseImport(JSON.stringify([a, b]));
+    expect(parsed.records).toHaveLength(1);
+    expect(parsed.records[0].pairItems[0].count).toBe(7);
   });
 });

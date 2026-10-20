@@ -1,5 +1,5 @@
 import { test, expect, type Locator, type Page } from '@playwright/test';
-import { appReady, expectTappable, field, settle, trackErrors, uah } from './helpers';
+import { appReady, expectTappable, field, nb, settle, trackErrors, uah } from './helpers';
 
 test('month counter: +1 / −1 on the home screen, survives reload', async ({ page }) => {
   const assertNoErrors = trackErrors(page);
@@ -213,4 +213,38 @@ test('home counter: one row per rate line, ± changes only that line; follows th
   await page.getByRole('button', { name: 'Пари: плюс один' }).click();
   await expect(aug).toContainText(String(augBefore + 1));
   assertNoErrors();
+});
+
+test('number fields: over-limit input is reverted, Backspace on a thousands space deletes a digit', async ({ page }) => {
+  await page.goto('#/calculate?new=1');
+  await appReady(page);
+  const pairs = field(page, 'Кількість пар');
+  await pairs.fill('400');
+  await pairs.press('End');
+  await pairs.press('0'); // 4000 > 500 → rejected
+  await pairs.press('0');
+  await expect(pairs).toHaveValue('400');
+
+  const extra = field(page, 'Додаткові');
+  await extra.fill('150000');
+  await expect(extra).toHaveValue(nb('150 000'));
+  // Caret right after the space: "150 |000"
+  await extra.evaluate((el: HTMLInputElement) => el.setSelectionRange(4, 4));
+  await extra.press('Backspace');
+  await expect(extra).toHaveValue(nb('15 000'));
+  await extra.press('Backspace'); // caret stayed after "15", so this removes the 5
+  await expect(extra).toHaveValue(nb('1 000'));
+});
+
+test('after saving, Back on the record goes to History (not the form)', async ({ page }) => {
+  await page.goto('./');
+  await appReady(page);
+  await page.getByRole('link', { name: 'Новий розрахунок' }).first().click();
+  await page.getByRole('button', { name: 'Наступний місяць' }).click();
+  await field(page, 'Кількість пар').fill('5');
+  await page.getByRole('button', { name: 'Розрахувати' }).click();
+  await page.getByRole('button', { name: 'Зберегти' }).click();
+  await expect(page.getByText('Розрахунок успішно збережено')).toBeVisible();
+  await page.getByRole('button', { name: 'Назад' }).click();
+  await expect(page.getByRole('heading', { name: 'Історія', level: 1 })).toBeVisible();
 });

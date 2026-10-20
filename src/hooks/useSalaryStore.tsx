@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { SalaryInput, SalaryProfile, SalaryRecord, SalarySettings } from '../types/salary';
-import { buildExport, buildRecord, salaryStorage, type AppData } from '../services/storage/salaryStorage';
+import { buildExport, buildRecord, salaryStorage, stamp, type AppData } from '../services/storage/salaryStorage';
 import { DEFAULT_PROFILE, DEFAULT_SETTINGS } from '../data/defaults';
 import { currentPeriod } from '../utils/period';
 import { useCloud } from './useCloud';
@@ -177,10 +177,10 @@ export function SalaryProvider({ children }: { children: ReactNode }) {
   const commitRecords = useCallback(
     async (records: SalaryRecord[]) => {
       // A month that disappears gets a tombstone so the deletion reaches other devices.
-      const now = new Date().toISOString();
       const kept = new Set(records.map((r) => r.period));
       const tombstones = { ...syncRef.current.tombstones };
-      for (const r of ref.current.records) if (!kept.has(r.period)) tombstones[r.period] = now;
+      // The deletion must be "newer" than the record it removes, whatever this device's clock says.
+      for (const r of ref.current.records) if (!kept.has(r.period)) tombstones[r.period] = stamp(r.updatedAt);
       for (const p of kept) delete tombstones[p];
       await saveSync({ tombstones });
       const sorted = await salaryStorage.saveRecords(records);
@@ -249,7 +249,7 @@ export function SalaryProvider({ children }: { children: ReactNode }) {
   const restoreRecord = useCallback(
     async (record: SalaryRecord) => {
       // Restored months count as a fresh edit so they win over their own deletion.
-      const restored = { ...record, updatedAt: new Date().toISOString() };
+      const restored = { ...record, updatedAt: stamp(record.updatedAt, syncRef.current.tombstones[record.period]) };
       await commitRecords([...ref.current.records.filter((r) => r.period !== record.period), restored]);
     },
     [commitRecords],
@@ -259,7 +259,8 @@ export function SalaryProvider({ children }: { children: ReactNode }) {
     async (patch: Partial<SalarySettings>) => {
       const settings = { ...ref.current.settings, ...patch };
       await salaryStorage.saveSettings(settings);
-      await saveSync({ settingsAt: new Date().toISOString() });
+      const fields = [...new Set([...(syncRef.current.settingsFields ?? []), ...Object.keys(patch)])];
+      await saveSync({ settingsAt: stamp(syncRef.current.settingsAt), settingsFields: fields });
       ref.current = { ...ref.current, settings };
       setData((d) => ({ ...d, settings }));
       schedulePush();
@@ -271,7 +272,8 @@ export function SalaryProvider({ children }: { children: ReactNode }) {
     async (patch: Partial<SalaryProfile>) => {
       const profile = { ...ref.current.profile, ...patch };
       await salaryStorage.saveProfile(profile);
-      await saveSync({ profileAt: new Date().toISOString() });
+      const fields = [...new Set([...(syncRef.current.profileFields ?? []), ...Object.keys(patch)])];
+      await saveSync({ profileAt: stamp(syncRef.current.profileAt), profileFields: fields });
       ref.current = { ...ref.current, profile };
       setData((d) => ({ ...d, profile }));
       schedulePush();
@@ -299,8 +301,8 @@ export function SalaryProvider({ children }: { children: ReactNode }) {
   const importData = useCallback(
     async (incoming: AppData, mode: 'replace' | 'merge') => {
       // Imported months are a fresh edit: they must win over older copies in the cloud.
-      const now = new Date().toISOString();
-      let records = incoming.records.map((r) => ({ ...r, updatedAt: now }));
+      const mine = new Map(ref.current.records.map((r) => [r.period, r.updatedAt]));
+      let records = incoming.records.map((r) => ({ ...r, updatedAt: stamp(mine.get(r.period), syncRef.current.tombstones[r.period]) }));
       if (mode === 'merge') {
         // Imported months win over existing ones.
         const periods = new Set(incoming.records.map((r) => r.period));

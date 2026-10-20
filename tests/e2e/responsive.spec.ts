@@ -157,6 +157,9 @@ test('keyboard: skip link and focus order', async ({ page }, testInfo) => {
   await expect(page.getByRole('link', { name: 'Перейти до вмісту' })).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(page.locator('#main')).toBeFocused();
+  // Hash routing: the skip link must not navigate to a "#main" route (404 page).
+  await expect(page.getByText('Сторінку не знайдено')).toHaveCount(0);
+  expect(new URL(page.url()).hash).toBe('');
 });
 
 test('every screen is served with HTTP 200 (iOS needs it to read the home-screen icon)', async ({ page, baseURL }) => {

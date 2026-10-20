@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { matchPath, useRouter } from './router/router';
 import { useSalary } from './hooks/useSalaryStore';
+import { applyUpdate } from './swUpdate';
 import { useTheme } from './hooks/useTheme';
 import { useCloud } from './hooks/useCloud';
 import { LoginPage } from './pages/LoginPage';
@@ -33,7 +34,7 @@ export function App() {
 
   useEffect(() => {
     const onUpdate = () =>
-      toast('Доступна нова версія', { tone: 'info', duration: 15000, action: { label: 'Оновити', onClick: () => location.reload() } });
+      toast('Доступна нова версія', { tone: 'info', duration: 15000, action: { label: 'Оновити', onClick: applyUpdate } });
     window.addEventListener('app-updated', onUpdate);
     return () => window.removeEventListener('app-updated', onUpdate);
   }, [toast]);
