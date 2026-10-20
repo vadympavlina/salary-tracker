@@ -2,6 +2,10 @@ import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { appReady, settle } from './helpers';
 
+// Pinch-zoom is switched off on purpose (owner's request: the app behaves like a native iOS app
+// and never zooms into fields), so axe's "zoom must stay enabled" rule is not applied.
+const ZOOM_OFF = ['meta-viewport'];
+
 // Accessibility audit (WCAG 2.1 A/AA: contrast, labels, roles, names…) on one phone and one desktop.
 const AUDITED = ['iPhone 15 · 393', 'Laptop · 1280'];
 
@@ -28,7 +32,7 @@ for (const theme of ['light', 'dark'] as const) {
     for (const [name, path] of pages) {
       await page.goto(path);
       await settle(page);
-      const { violations } = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
+      const { violations } = await new AxeBuilder({ page }).disableRules(ZOOM_OFF).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
       for (const v of violations) {
         problems.push(`${name}: [${v.id}] ${v.help} → ${v.nodes.slice(0, 3).map((n) => n.target.join(' ')).join(' | ')}`);
       }
@@ -37,13 +41,13 @@ for (const theme of ['light', 'dark'] as const) {
     await page.goto('#/calculate?new=1');
     await page.getByRole('button', { name: 'Розрахувати' }).click();
     await settle(page);
-    for (const v of (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations) {
+    for (const v of (await new AxeBuilder({ page }).disableRules(ZOOM_OFF).withTags(['wcag2a', 'wcag2aa']).analyze()).violations) {
       problems.push(`Результат: [${v.id}] ${v.help} → ${v.nodes.slice(0, 3).map((n) => n.target.join(' ')).join(' | ')}`);
     }
     await page.goto('#/settings');
     await page.getByRole('button', { name: /Режим авансу/ }).click();
     await page.waitForTimeout(450);
-    for (const v of (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations) {
+    for (const v of (await new AxeBuilder({ page }).disableRules(ZOOM_OFF).withTags(['wcag2a', 'wcag2aa']).analyze()).violations) {
       problems.push(`Діалог: [${v.id}] ${v.help} → ${v.nodes.slice(0, 3).map((n) => n.target.join(' ')).join(' | ')}`);
     }
     expect(problems).toEqual([]);

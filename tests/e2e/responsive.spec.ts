@@ -176,3 +176,24 @@ test('every screen is served with HTTP 200 (iOS needs it to read the home-screen
   await expect(page.getByRole('heading', { name: 'Налаштування', level: 1 })).toBeVisible();
   expect(new URL(page.url()).hash).toBe('#/settings');
 });
+
+test('no zooming: viewport locks the scale and no field is small enough for iOS to zoom into', async ({ page }) => {
+  await page.goto('./');
+  await appReady(page);
+  const viewport = await page.locator('meta[name="viewport"]').getAttribute('content');
+  expect(viewport).toContain('maximum-scale=1');
+  expect(viewport).toContain('user-scalable=no');
+  expect(await page.evaluate(() => getComputedStyle(document.documentElement).touchAction)).toBe('pan-x pan-y');
+  // iOS zooms into any focused field with text smaller than 16px.
+  for (const path of ['./', '#/calculate?new=1', '#/settings']) {
+    await page.goto(path);
+    await appReady(page);
+    if (path === '#/settings') await page.getByRole('button', { name: /Ставка за пару/ }).click();
+    const small = await page.evaluate(() =>
+      [...document.querySelectorAll<HTMLElement>('input:not([type=file]):not([type=hidden]), textarea, select')]
+        .filter((el) => parseFloat(getComputedStyle(el).fontSize) < 16)
+        .map((el) => `${el.id || el.className} ${getComputedStyle(el).fontSize}`),
+    );
+    expect(small, `${path}: fields under 16px`).toEqual([]);
+  }
+});

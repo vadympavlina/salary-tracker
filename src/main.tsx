@@ -27,6 +27,19 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 );
 
+// iOS Safari ignores user-scalable=no for pinch gestures; block them directly so the screen
+// never zooms (owner's request). Scrolling and taps are unaffected.
+for (const type of ['gesturestart', 'gesturechange', 'gestureend']) {
+  document.addEventListener(type, (e) => e.preventDefault(), { passive: false });
+}
+document.addEventListener(
+  'touchmove',
+  (e) => {
+    if (e.touches.length > 1) e.preventDefault();
+  },
+  { passive: false },
+);
+
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
     const hadController = !!navigator.serviceWorker.controller;

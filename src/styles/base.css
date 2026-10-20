@@ -16,9 +16,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
-  /* No double-tap zoom (pinch zoom stays): taps react instantly and don't swallow the next swipe. */
-  touch-action: manipulation;
+  /* No zooming at all (no double-tap, no pinch): the app behaves like a native iOS app.
+     Taps react instantly and don't swallow the next swipe. Scrolling stays native. */
+  touch-action: pan-x pan-y;
 }
+html { touch-action: pan-x pan-y; }
 
 h1, h2, h3, p { margin: 0; }
 button, input, select, textarea { font: inherit; color: inherit; }
