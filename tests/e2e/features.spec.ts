@@ -248,3 +248,33 @@ test('after saving, Back on the record goes to History (not the form)', async ({
   await page.getByRole('button', { name: 'Назад' }).click();
   await expect(page.getByRole('heading', { name: 'Історія', level: 1 })).toBeVisible();
 });
+
+test('tab bar: drag the lens along the bar → it follows the finger and opens the tab where it is released', async ({ page, browserName }, testInfo) => {
+  test.skip(browserName !== 'chromium' || !testInfo.project.use.hasTouch, 'touch drag via Chromium protocol');
+  await page.goto('./');
+  await appReady(page);
+  const bar = page.locator('.tabbar');
+  test.skip(!(await bar.isVisible()), 'no bottom tab bar in this layout');
+  const box = (await bar.boundingBox())!;
+  const y = box.y + box.height / 2;
+  const cell = box.width / 4;
+  const cdp = await page.context().newCDPSession(page);
+  await page.waitForTimeout(400);
+  const from = box.x + cell / 2;
+  const to = box.x + cell * 3.5;
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: from, y }] });
+  for (let i = 1; i <= 12; i++) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: from + ((to - from) * i) / 12, y }] });
+  // Mid-drag: the lens is lifted and the tab under the finger is highlighted, nothing opened yet.
+  await expect(page.locator('.tabbar__list')).toHaveClass(/is-dragging/);
+  await expect(page.getByRole('link', { name: 'Аналітика' })).toHaveClass(/is-active/);
+  await expect(page).not.toHaveURL(/analytics/);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await expect(page).toHaveURL(/#\/analytics/);
+  await expect(page.getByRole('heading', { name: 'Аналітика', level: 1 })).toBeVisible();
+  await cdp.detach();
+
+  // A plain tap still works like a link.
+  await page.waitForTimeout(400);
+  await page.getByRole('link', { name: 'Історія' }).tap();
+  await expect(page).toHaveURL(/#\/history/);
+});
