@@ -59,9 +59,9 @@ for (const p of PAGES) {
       }
       // Tab labels are never cut off (with room to spare for wider fonts such as SF Pro on iOS).
       const clipped = await page.evaluate(() =>
-        [...document.querySelectorAll<HTMLElement>('.tabbar__item span')]
-          .filter((s) => s.offsetParent && s.scrollWidth > s.parentElement!.clientWidth - 12)
-          .map((s) => `${s.textContent} ${s.scrollWidth}/${s.parentElement!.clientWidth}`),
+        [...document.querySelectorAll<HTMLElement>('.tabbar .lg-tab .tabbar__label')]
+          .filter((s) => s.offsetParent && s.scrollWidth > s.closest('.lg-tab')!.clientWidth - 12)
+          .map((s) => `${s.textContent} ${s.scrollWidth}/${s.closest('.lg-tab')!.clientWidth}`),
       );
       expect(clipped, 'clipped tab labels').toEqual([]);
     }

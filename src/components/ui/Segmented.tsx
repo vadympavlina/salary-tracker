@@ -1,4 +1,4 @@
-import { useRef, type KeyboardEvent, type CSSProperties } from 'react';
+import { GlassTabs } from './GlassTabs';
 
 interface Option<T extends string> {
   value: T;
@@ -14,42 +14,23 @@ interface Props<T extends string> {
   size?: 'md' | 'sm';
 }
 
-/** iOS-style segmented control with a sliding thumb; arrow keys move selection (radiogroup pattern). */
+/** iOS segmented control = Glisse glass tab bar (tabs; arrow keys move, the lens can be dragged). */
 export function Segmented<T extends string>({ options, value, onChange, label, size = 'md' }: Props<T>) {
-  const refs = useRef<(HTMLButtonElement | null)[]>([]);
-  const index = Math.max(0, options.findIndex((o) => o.value === value));
-
-  const onKey = (e: KeyboardEvent) => {
-    const dir = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
-    if (!dir) return;
-    e.preventDefault();
-    const next = (index + dir + options.length) % options.length;
-    onChange(options[next].value);
-    refs.current[next]?.focus();
-  };
-
-  const style = { '--count': options.length, '--index': index } as CSSProperties;
-
   return (
-    <div className={`segmented segmented--${size}`} role="radiogroup" aria-label={label} style={style} onKeyDown={onKey}>
-      <span className="segmented__thumb" aria-hidden="true" />
-      {options.map((o, i) => (
-        <button
-          key={o.value}
-          ref={(el) => {
-            refs.current[i] = el;
-          }}
-          type="button"
-          role="radio"
-          aria-checked={o.value === value}
-          tabIndex={o.value === value ? 0 : -1}
-          className="segmented__item"
-          onClick={() => onChange(o.value)}
-        >
-          {o.label}
-          {o.badge !== undefined && <span className="segmented__badge num">{o.badge}</span>}
-        </button>
-      ))}
-    </div>
+    <GlassTabs
+      className={`segmented-glass segmented-glass--${size}`}
+      label={label}
+      value={value}
+      onChange={(v) => onChange(v as T)}
+      items={options.map((o) => ({
+        value: o.value,
+        label: (
+          <>
+            {o.label}
+            {o.badge !== undefined && <span className="segmented__badge num">{o.badge}</span>}
+          </>
+        ),
+      }))}
+    />
   );
 }

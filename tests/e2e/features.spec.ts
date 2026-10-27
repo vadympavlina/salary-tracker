@@ -88,7 +88,7 @@ test('theme: light by default, dark and system from settings, no flash on reload
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   await page.goto('#/settings');
   await page.getByRole('button', { name: /^Тема/ }).click();
-  await page.getByRole('dialog').getByRole('radio', { name: 'Темна', exact: true }).click();
+  await page.getByRole('dialog').getByRole('tab', { name: 'Темна', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
   expect(bg).toBe('rgb(0, 0, 0)');
@@ -102,7 +102,7 @@ test('theme: light by default, dark and system from settings, no flash on reload
   // System follows the OS.
   await page.emulateMedia({ colorScheme: 'light' });
   await page.getByRole('button', { name: /^Тема/ }).click();
-  await page.getByRole('dialog').getByRole('radio', { name: 'Системна' }).click();
+  await page.getByRole('dialog').getByRole('tab', { name: 'Системна' }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   await page.emulateMedia({ colorScheme: 'dark' });
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
@@ -264,9 +264,8 @@ test('tab bar: drag the lens along the bar → it follows the finger and opens t
   const to = box.x + cell * 3.5;
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: from, y }] });
   for (let i = 1; i <= 12; i++) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: from + ((to - from) * i) / 12, y }] });
-  // Mid-drag: the lens is lifted and the tab under the finger is highlighted, nothing opened yet.
-  await expect(page.locator('.tabbar__list')).toHaveClass(/is-dragging/);
-  await expect(page.getByRole('link', { name: 'Аналітика' })).toHaveClass(/is-active/);
+  // Mid-drag: the Glisse lens is lifted, nothing opened yet.
+  await expect(page.locator('.tabbar .lg-tab-bar')).toHaveAttribute('data-lifted', '');
   await expect(page).not.toHaveURL(/analytics/);
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await expect(page).toHaveURL(/#\/analytics/);

@@ -42,7 +42,7 @@
 .page-header__actions { display: flex; gap: 8px; }
 .page-header__back { margin-left: -4px; }
 
-/* ---------- Bottom tab bar (liquid glass) ---------- */
+/* ---------- Bottom tab bar: Glisse Liquid Glass ---------- */
 .tabbar {
   position: fixed;
   left: 50%;
@@ -50,76 +50,17 @@
   transform: translateX(-50%);
   width: min(calc(100% - 24px), 440px);
   z-index: 40;
-  border-radius: 32px;
-  background: var(--glass-bar);
-  -webkit-backdrop-filter: blur(14px) saturate(190%) brightness(1.06);
-  backdrop-filter: blur(14px) saturate(190%) brightness(1.06);
-  box-shadow: var(--glass-bar-shadow);
 }
-/* Specular sheen across the top of the glass. */
-.tabbar::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background: var(--glass-sheen);
-  mix-blend-mode: soft-light;
-}
-.tabbar__list { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 5px; }
-.tabbar__lens {
-  position: absolute;
-  top: 5px;
-  bottom: 5px;
-  left: 5px;
-  width: calc((100% - 10px) / var(--tabs, 4));
-  border-radius: 27px;
-  pointer-events: none;
-  translate: calc(var(--i, 0) * 100%) 0;
-  scale: 1 1;
-  transition: translate 0.55s cubic-bezier(0.3, 1.35, 0.5, 1), scale 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s;
-  background: var(--glass-lens);
-  -webkit-backdrop-filter: blur(3px) brightness(1.1) saturate(1.8);
-  backdrop-filter: blur(3px) brightness(1.1) saturate(1.8);
-  box-shadow: var(--glass-lens-shadow);
-}
-/* While flowing to the next tab the lens stretches like a drop, then springs back. */
-.tabbar__lens.is-moving { scale: 1.18 0.9; transition-duration: 0.55s, 0.18s, 0.2s; }
-.tabbar__lens.is-hidden { opacity: 0; }
-/* Dragging: the lens follows the finger, a little "lifted", then springs onto the nearest tab. */
-.tabbar__list { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
-.tabbar__list.is-dragging .tabbar__lens {
-  translate: var(--drag-x, 0) 0;
-  scale: 1.12 1.1;
-  transition: scale 0.3s var(--spring-out), opacity 0.2s;
-}
-.tabbar__list.is-dragging .tabbar__item { transform: none; }
-.tabbar__item {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  height: 52px;
-  border-radius: 27px;
-  font-size: 10.5px;
-  font-weight: 600;
-  color: var(--text-2);
-  transition: color 0.25s, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.tabbar__item:active { transform: scale(1.06); }
-.tabbar__item.is-active { color: var(--accent-text); }
-.tabbar__item svg { transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
-.tabbar__item.is-active svg { transform: scale(1.08); }
+.tabbar .lg-tab-bar { width: 100%; border-radius: 31px; box-shadow: 0 12px 32px -10px rgba(21, 21, 43, 0.3); }
+:root[data-theme='dark'] .tabbar .lg-tab-bar { box-shadow: 0 12px 32px -10px rgba(0, 0, 0, 0.7); }
+.tabbar .lg-tab { color: var(--text-2); }
+.tabbar .lg-tab-tint { color: var(--accent-text); }
+.tabbar__item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; width: 100%; height: 100%; }
+.tabbar__label { max-width: 100%; font-size: 10.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 @media (max-width: 359px) {
   .tabbar { width: calc(100% - 16px); }
-  .tabbar__list { padding: 4px; }
-  .tabbar__lens { top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px) / var(--tabs, 4)); }
-  .tabbar__item { font-size: 10px; }
+  .tabbar__label { font-size: 10px; }
 }
-.tabbar__item span { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ---------- Sidebar (desktop) ---------- */
 .sidebar { display: none; }

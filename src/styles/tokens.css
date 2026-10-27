@@ -102,6 +102,11 @@
   --glass-danger: linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 60%), rgba(255, 56, 60, 0.13);
   --spring-out: cubic-bezier(0.34, 1.56, 0.64, 1);
 
+  /* Glisse (Liquid Glass components) in our colours; dark values follow via the same vars. */
+  --lg-fill: var(--accent-fill);
+  --lg-ring: var(--accent-ring);
+  --lg-foreground: var(--text);
+
   --gutter: 16px;
   --tabbar-h: 62px;
   --safe-b: env(safe-area-inset-bottom, 0px);

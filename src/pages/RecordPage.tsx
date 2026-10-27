@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { CircleCheck, PencilLine, SearchX, Share2, Trash2 } from 'lucide-react';
+import { Menu } from 'glisse';
 import { useSalary } from '../hooks/useSalaryStore';
 import { useRouter } from '../router/router';
 import { calculateSalary, percentChange } from '../services/calculations/salaryCalculator';
 import { formatDateTime, formatPeriod, shiftPeriod } from '../utils/period';
 import { formatNumber, formatUAH } from '../utils/format';
 import { PageHeader } from '../components/ui/PageHeader';
-import { Button, IconButton } from '../components/ui/Button';
+import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { EmptyState } from '../components/ui/EmptyState';
 import { SalaryCard } from '../components/salary/SalaryCard';
@@ -84,9 +85,17 @@ export function RecordPage({ id }: { id: string }) {
         // Right after saving, "back" means the list — not the form that was just submitted.
         onBack={justSaved ? () => navigate('/history', { replace: true }) : undefined}
         actions={
-          <IconButton label="Поділитися або скопіювати" onClick={share}>
-            <Share2 size={19} />
-          </IconButton>
+          <Menu
+            aria-label="Дії з місяцем"
+            align="end"
+            className="record-menu"
+            items={[
+              { label: 'Поділитися', icon: <Share2 size={18} />, onSelect: share },
+              { label: 'Редагувати', icon: <PencilLine size={18} />, onSelect: edit },
+              'separator',
+              { label: 'Видалити', icon: <Trash2 size={18} />, onSelect: () => setConfirm(true), destructive: true },
+            ]}
+          />
         }
       />
       {justSaved && (

@@ -43,9 +43,9 @@ test('full flow: create → calculate → save → history → edit → delete �
   await expect(page.getByRole('heading', { name: 'Листопад 2026', level: 1 })).toBeVisible();
   await page.goto('#/history');
   await expect(page.getByRole('link', { name: /Листопад 2026/ })).toBeVisible();
-  await page.getByRole('radio', { name: /В очікуванні/ }).click();
+  await page.getByRole('tab', { name: /В очікуванні/ }).click();
   await expect(page.locator('.history-item')).toHaveCount(2);
-  await page.getByRole('radio', { name: /Всі/ }).click();
+  await page.getByRole('tab', { name: /Всі/ }).click();
 
   // 6. Edit: cash received in hand → paid
   await page.getByRole('link', { name: /Листопад 2026/ }).click();
@@ -73,9 +73,9 @@ test('full flow: create → calculate → save → history → edit → delete �
   await page.getByRole('link', { name: 'Аналітика' }).first().click();
   await expect(page.getByText('Динаміка доходу')).toBeVisible();
   await expect(page.locator('.bar')).toHaveCount(6);
-  await page.getByRole('radio', { name: 'Пари' }).click();
+  await page.getByRole('tab', { name: 'Пари' }).click();
   await expect(page.getByRole('heading', { name: 'Кількість пар' })).toBeVisible();
-  await page.getByRole('radio', { name: 'Відео' }).click();
+  await page.getByRole('tab', { name: 'Відео' }).click();
   await expect(page.getByRole('heading', { name: 'Перевірені відео' })).toBeVisible();
 
   // 9. Settings: new default rate
