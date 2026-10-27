@@ -17,6 +17,8 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
+  // The page asks before offering "Оновити": only a different build is an update.
+  if (event.data && event.data.type === 'GET_VERSION' && event.ports[0]) event.ports[0].postMessage(VERSION);
 });
 
 self.addEventListener('activate', (event) => {

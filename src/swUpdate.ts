@@ -8,7 +8,30 @@ import { APP_BASE } from './router/router';
 let registration: ServiceWorkerRegistration | undefined;
 let reloadOnSwitch = false;
 
-const announce = () => window.dispatchEvent(new Event('app-updated'));
+/** Build version of a worker (asked over a MessageChannel; '' if it doesn't answer). */
+function versionOf(sw: ServiceWorker | null): Promise<string> {
+  if (!sw) return Promise.resolve('');
+  return new Promise((resolve) => {
+    const channel = new MessageChannel();
+    const timer = window.setTimeout(() => resolve(''), 3000);
+    channel.port1.onmessage = (e) => {
+      window.clearTimeout(timer);
+      resolve(String(e.data ?? ''));
+    };
+    sw.postMessage({ type: 'GET_VERSION' }, [channel.port2]);
+  });
+}
+
+/**
+ * Offers "Оновити" only for a real update: a waiting worker next to an active one, running a
+ * different build. (Some engines report a first install or a re-registration as "installed".)
+ */
+async function announceIfNewer(reg: ServiceWorkerRegistration) {
+  const waiting = reg.waiting;
+  if (!waiting || !reg.active || !navigator.serviceWorker.controller) return;
+  const [next, current] = await Promise.all([versionOf(waiting), versionOf(reg.active)]);
+  if (next && next !== current) window.dispatchEvent(new Event('app-updated'));
+}
 
 export function registerServiceWorker() {
   if (!('serviceWorker' in navigator) || !import.meta.env.PROD) return;
@@ -18,12 +41,11 @@ export function registerServiceWorker() {
       .then((reg) => {
         registration = reg;
         // A version that finished installing earlier (e.g. while the app was in the background).
-        if (reg.waiting && navigator.serviceWorker.controller) announce();
+        announceIfNewer(reg);
         reg.addEventListener('updatefound', () => {
           const sw = reg.installing;
           sw?.addEventListener('statechange', () => {
-            // "installed" with an existing controller = an update, not the first install.
-            if (sw.state === 'installed' && navigator.serviceWorker.controller) announce();
+            if (sw.state === 'installed') announceIfNewer(reg);
           });
         });
         // Home-screen apps are rarely reloaded: look for a new deploy whenever the app comes back.

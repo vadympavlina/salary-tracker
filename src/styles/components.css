@@ -1170,3 +1170,7 @@ a.page-header__back,
 @media (max-width: 359px) {
   .segmented-glass .segmented__badge { display: none; }
 }
+
+@media (pointer: coarse) {
+  .toast__action { min-height: 44px; padding: 0 14px; }
+}
