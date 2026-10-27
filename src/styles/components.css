@@ -1054,3 +1054,87 @@ html.modal-open { overflow: hidden; }
 }
 .counter__label b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .counter__footer { display: flex; justify-content: space-between; gap: 12px; }
+
+/* ================= Liquid glass controls =================
+   Pill shapes, a glass fill with a lit edge, tinted glass for the main actions, and a press
+   that "inflates" with a spring (iOS 26). Blur only where something can scroll underneath. */
+.btn {
+  border-radius: var(--r-pill);
+  transition: background-color 0.2s, box-shadow 0.2s, opacity 0.2s, transform 0.35s var(--spring-out);
+}
+.btn:active:not(:disabled) { transform: scale(1.04); }
+.btn--primary { background: var(--glass-tint); box-shadow: var(--glass-tint-shine); }
+.btn--primary:hover:not(:disabled) { background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 55%), var(--accent-fill-hover); }
+.btn--secondary { background: var(--glass); color: var(--text); box-shadow: var(--glass-shine); }
+.btn--secondary:hover:not(:disabled), .btn--secondary:active:not(:disabled) { background: var(--glass-pressed); }
+.btn--tinted { background: var(--glass); color: var(--accent-text); box-shadow: var(--glass-shine); }
+.btn--danger { background: var(--glass-danger); color: var(--red-text); box-shadow: var(--glass-shine); }
+.btn--danger.grow { background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 55%), var(--red); color: #fff; box-shadow: var(--glass-tint-shine); }
+
+.icon-btn { transition: transform 0.35s var(--spring-out), background-color 0.2s; }
+.icon-btn:active { transform: scale(1.1); }
+.icon-btn--surface, .icon-btn--plain { background: var(--glass); color: var(--accent-text); box-shadow: var(--glass-shine); }
+.icon-btn--surface:hover, .icon-btn--plain:hover { background: var(--glass-pressed); }
+.icon-btn--accent { background: var(--glass-tint); box-shadow: var(--glass-tint-shine); }
+.icon-btn--accent:hover { background: var(--glass-tint); filter: brightness(0.95); }
+.header-avatar { box-shadow: var(--glass-tint-shine); transition: transform 0.35s var(--spring-out); }
+.header-avatar:active { transform: scale(1.1); }
+
+/* Floating bars sit over scrolling content: real glass. */
+.page-header__actions .icon-btn,
+.page-header__back,
+.action-bar--sticky .btn--secondary,
+.action-bar--sticky .btn--danger:not(.grow) {
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  backdrop-filter: blur(16px) saturate(180%);
+}
+
+/* Home counter */
+.counter__btn { transition: transform 0.35s var(--spring-out), background-color 0.15s; }
+.counter__btn:active:not(:disabled) { transform: scale(1.12); }
+.counter__btn--plus { background: var(--glass-tint); box-shadow: var(--glass-tint-shine); }
+.counter__btn:not(.counter__btn--plus) { background: var(--glass); color: var(--text); box-shadow: var(--glass-shine); }
+.counter__btn:not(.counter__btn--plus):active:not(:disabled) { background: var(--glass-pressed); }
+
+/* − | + in the form: one glass capsule */
+.stepper { border-radius: var(--r-pill); background: var(--glass); box-shadow: var(--glass-shine); }
+.stepper__btn { border-radius: var(--r-pill); }
+.stepper__btn:active:not(:disabled) { background: var(--glass-pressed); }
+
+/* Month switcher in the form: just the two glass arrows */
+.month-picker { background: transparent; padding: 0; }
+.month-picker__btn { border-radius: var(--r-pill); background: var(--glass); color: var(--accent-text); box-shadow: var(--glass-shine); transition: transform 0.35s var(--spring-out); }
+.month-picker__btn:active { transform: scale(1.1); background: var(--glass-pressed); }
+
+/* Month chips on Home */
+.month-chip { background: var(--glass); box-shadow: var(--glass-shine); transition: background-color 0.2s, color 0.2s, transform 0.35s var(--spring-out); }
+.month-chip:active { transform: scale(1.05); }
+.month-chip.is-on { background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 55%), #15152b; color: #fff; box-shadow: inset 0 1px 0.5px rgba(255, 255, 255, 0.35), 0 6px 16px -8px rgba(0, 0, 0, 0.5); }
+:root[data-theme='dark'] .month-chip.is-on { background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.78)); color: #111118; box-shadow: inset 0 1px 0.5px #fff, 0 6px 16px -8px rgba(0, 0, 0, 0.6); }
+
+/* Segmented control: glass track with a lens thumb */
+.segmented { border-radius: var(--r-pill); padding: 4px; background: var(--glass); box-shadow: var(--glass-shine); }
+.segmented__thumb {
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc((100% - 8px) / var(--count));
+  border-radius: var(--r-pill);
+  background: var(--glass-thumb);
+  box-shadow: var(--glass-thumb-shadow);
+}
+.segmented__item { border-radius: var(--r-pill); }
+
+/* Calculate: the floating "На руки … Розрахувати" capsule */
+.action-bar--calc { border-radius: var(--r-pill); padding: 8px 8px 8px 22px; background: var(--glass-bar); box-shadow: var(--glass-bar-shadow); }
+@media (min-width: 1024px) {
+  .action-bar--calc { border-radius: var(--r-xl); padding: 22px; }
+}
+
+.waiting-banner { border-radius: var(--r-pill); }
+.chip, .add-line { transition: transform 0.35s var(--spring-out), background-color 0.15s; }
+/* Count fields with −/+: the number needs ~4 digits, leaving the label room for one line. */
+.field:has(.stepper) .field__control { width: 58px; }
+@media (min-width: 360px) {
+  .field--row .field__label { white-space: nowrap; }
+}

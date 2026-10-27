@@ -80,6 +80,28 @@
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --spring: cubic-bezier(0.34, 1.4, 0.64, 1);
 
+
+  /* Liquid glass (tab bar, buttons) */
+  --glass-bar: rgba(255, 255, 255, 0.42);
+  --glass-bar-shadow: inset 0 1px 0.5px rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.35),
+    inset 1px 0 1px rgba(255, 255, 255, 0.4), inset -1px 0 1px rgba(255, 255, 255, 0.4), 0 0 0 0.5px rgba(21, 21, 43, 0.08),
+    0 12px 32px -10px rgba(21, 21, 43, 0.3), 0 2px 6px rgba(21, 21, 43, 0.06);
+  --glass-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 42%);
+  --glass-lens: radial-gradient(120% 140% at 30% 0%, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.25) 55%, rgba(255, 255, 255, 0.12)), rgba(106, 90, 232, 0.08);
+  --glass-lens-shadow: inset 0 1px 1px #fff, inset 0 -2px 3px rgba(106, 90, 232, 0.12), inset 2px 0 3px rgba(255, 255, 255, 0.5),
+    inset -2px 0 3px rgba(255, 255, 255, 0.5), 0 0 0 0.5px rgba(255, 255, 255, 0.9), 0 6px 14px -6px rgba(60, 40, 180, 0.35);
+  --glass: rgba(255, 255, 255, 0.62);
+  --glass-pressed: rgba(236, 236, 242, 0.92);
+  --glass-shine: inset 0 1px 0.5px rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.35), inset 0 0 0 0.5px rgba(255, 255, 255, 0.6),
+    0 0 0 0.5px rgba(0, 0, 0, 0.07), 0 4px 14px -6px rgba(21, 21, 43, 0.18);
+  --glass-tint: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 55%), var(--accent-fill);
+  --glass-tint-shine: inset 0 1px 0.5px rgba(255, 255, 255, 0.55), inset 0 -2px 4px rgba(20, 10, 90, 0.25), inset 0 0 0 0.5px rgba(255, 255, 255, 0.25),
+    0 8px 20px -8px rgba(86, 70, 216, 0.6);
+  --glass-thumb: radial-gradient(120% 140% at 30% 0%, #fff, rgba(255, 255, 255, 0.75));
+  --glass-thumb-shadow: 0 4px 14px -4px rgba(21, 21, 43, 0.25), inset 0 0 0 1px rgba(255, 255, 255, 0.9), inset 0 -2px 4px rgba(106, 90, 232, 0.12);
+  --glass-danger: linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 60%), rgba(255, 56, 60, 0.13);
+  --spring-out: cubic-bezier(0.34, 1.56, 0.64, 1);
+
   --gutter: 16px;
   --tabbar-h: 62px;
   --safe-b: env(safe-area-inset-bottom, 0px);
@@ -156,4 +178,20 @@
 
   --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.45), 0 18px 48px -16px rgba(0, 0, 0, 0.8);
   --shadow-accent: 0 10px 28px -14px rgba(110, 92, 255, 0.5);
+
+  --glass-bar: rgba(40, 40, 46, 0.5);
+  --glass-bar-shadow: inset 0 1px 0.5px rgba(255, 255, 255, 0.28), inset 0 -1px 1px rgba(255, 255, 255, 0.08), 0 0 0 0.5px rgba(255, 255, 255, 0.08),
+    0 12px 32px -10px rgba(0, 0, 0, 0.7);
+  --glass-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 45%);
+  --glass-lens: radial-gradient(120% 140% at 30% 0%, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.08) 55%, rgba(255, 255, 255, 0.04)), rgba(139, 124, 255, 0.14);
+  --glass-lens-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.45), inset 0 -2px 3px rgba(139, 124, 255, 0.2), 0 0 0 0.5px rgba(255, 255, 255, 0.2),
+    0 6px 14px -6px rgba(0, 0, 0, 0.6);
+  --glass: rgba(120, 120, 135, 0.22);
+  --glass-pressed: rgba(150, 150, 165, 0.36);
+  --glass-shine: inset 0 1px 0.5px rgba(255, 255, 255, 0.28), inset 0 -1px 1px rgba(255, 255, 255, 0.06), 0 0 0 0.5px rgba(255, 255, 255, 0.1),
+    0 6px 16px -8px rgba(0, 0, 0, 0.7);
+  --glass-tint-shine: inset 0 1px 0.5px rgba(255, 255, 255, 0.4), inset 0 -2px 4px rgba(10, 5, 60, 0.35), 0 8px 20px -8px rgba(98, 82, 230, 0.55);
+  --glass-thumb: radial-gradient(120% 140% at 30% 0%, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.12));
+  --glass-thumb-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4), 0 4px 14px -4px rgba(0, 0, 0, 0.6);
+  --glass-danger: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0) 60%), rgba(255, 107, 112, 0.16);
 }
