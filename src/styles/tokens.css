@@ -69,6 +69,12 @@
   --r-md: 14px;
   --r-sm: 10px;
   --r-pill: 999px;
+  /* stacking scale */
+  --z-raised: 1;
+  --z-sticky: 20;
+  --z-bar: 30;
+  --z-header: 40;
+  --z-skip: 100;
 
   --shadow-sm: none;
   --shadow: none;
@@ -79,7 +85,6 @@
 
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --spring: cubic-bezier(0.34, 1.4, 0.64, 1);
-
 
   /* Liquid glass (tab bar, buttons) */
   --glass-bar: rgba(255, 255, 255, 0.42);

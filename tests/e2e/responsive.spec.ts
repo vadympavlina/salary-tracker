@@ -4,7 +4,7 @@ import { appReady, expectTappable, field, scrollToBottom, settle, trackErrors } 
 
 const PAGES = [
   { name: 'Головна', path: './', heading: 'Зарплата' },
-  { name: 'Розрахунок', path: '#/calculate?new=1', heading: 'Розрахунок' },
+  { name: 'Розрахунок', path: '#/calculate?new=1', heading: 'Розрахунок', pushed: true },
   { name: 'Історія', path: '#/history', heading: 'Історія' },
   { name: 'Деталі', path: '#/history/:first', heading: /\d{4}/, pushed: true },
   { name: 'Аналітика', path: '#/analytics', heading: 'Аналітика' },

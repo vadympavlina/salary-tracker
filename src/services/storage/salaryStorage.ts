@@ -137,7 +137,7 @@ export function normalizeProfile(raw: unknown): SalaryProfile {
   return { firstName: str(p.firstName, DEFAULT_PROFILE.firstName), fullName: str(p.fullName, DEFAULT_PROFILE.fullName) };
 }
 
-const sortRecords = (records: SalaryRecord[]) => [...records].sort((a, b) => b.period.localeCompare(a.period));
+export const sortRecords = (records: SalaryRecord[]) => [...records].sort((a, b) => b.period.localeCompare(a.period));
 
 /**
  * Repository for everything the app persists. UI code never touches the

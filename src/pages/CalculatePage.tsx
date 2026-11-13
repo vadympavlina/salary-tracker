@@ -139,7 +139,7 @@ export function CalculatePage() {
     <form className="calc" onSubmit={submit} noValidate>
       <PageHeader
         title={editing ? 'Редагування' : 'Розрахунок'}
-        backTo={editing ? `/history/${editing.id}` : undefined}
+        backTo={editing ? `/history/${editing.id}` : '/'}
       />
 
       <div className="calc__layout">

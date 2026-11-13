@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { SalaryInput, SalaryProfile, SalaryRecord, SalarySettings } from '../types/salary';
-import { buildExport, buildRecord, salaryStorage, stamp, type AppData } from '../services/storage/salaryStorage';
+import { buildExport, buildRecord, salaryStorage, sortRecords, stamp, type AppData } from '../services/storage/salaryStorage';
 import { DEFAULT_PROFILE, DEFAULT_SETTINGS } from '../data/defaults';
 import { currentPeriod } from '../utils/period';
 import { useCloud } from './useCloud';
@@ -185,6 +185,8 @@ export function SalaryProvider({ children }: { children: ReactNode }) {
       // The deletion must be "newer" than the record it removes, whatever this device's clock says.
       for (const r of ref.current.records) if (!kept.has(r.period)) tombstones[r.period] = stamp(r.updatedAt);
       for (const p of kept) delete tombstones[p];
+      window.clearTimeout(writeTimer.current);
+      pendingWrite.current = false; // this write covers everything
       const previous = syncRef.current.tombstones;
       await saveSync({ tombstones });
       let sorted: SalaryRecord[];
@@ -201,6 +203,51 @@ export function SalaryProvider({ children }: { children: ReactNode }) {
     },
     [saveSync, schedulePush],
   );
+
+  // Counter taps update the screen at once but are written to storage ~300 ms later (and always
+  // when the app is hidden or closed): press-and-hold would otherwise do two synchronous
+  // localStorage writes every 110 ms.
+  const pendingWrite = useRef(false);
+  const writeTimer = useRef<number | undefined>(undefined);
+  const flushPending = useCallback(() => {
+    window.clearTimeout(writeTimer.current);
+    if (!pendingWrite.current) return;
+    pendingWrite.current = false;
+    // The write starts synchronously, so it also completes during `pagehide`.
+    void salaryStorage.saveRecords(ref.current.records).catch(() => {
+      pendingWrite.current = true; // quota or similar: keep it pending, the next change retries
+    });
+  }, []);
+  const commitDeferred = useCallback(
+    async (records: SalaryRecord[]) => {
+      const tomb = syncRef.current.tombstones;
+      const revived = records.some((r) => tomb[r.period]);
+      if (revived) {
+        const next = { ...tomb };
+        for (const r of records) delete next[r.period];
+        await saveSync({ tombstones: next });
+      }
+      const sorted = sortRecords(records);
+      ref.current = { ...ref.current, records: sorted };
+      setData((d) => ({ ...d, records: sorted }));
+      pendingWrite.current = true;
+      window.clearTimeout(writeTimer.current);
+      writeTimer.current = window.setTimeout(flushPending, 300);
+      schedulePush();
+    },
+    [saveSync, schedulePush, flushPending],
+  );
+  useEffect(() => {
+    const onHide = () => {
+      if (document.visibilityState === 'hidden') flushPending();
+    };
+    document.addEventListener('visibilitychange', onHide);
+    window.addEventListener('pagehide', flushPending);
+    return () => {
+      document.removeEventListener('visibilitychange', onHide);
+      window.removeEventListener('pagehide', flushPending);
+    };
+  }, [flushPending]);
 
   // Every write goes through the same queue as the counter taps, so a save, delete, undo or
   // settings change can never interleave with another write and overwrite it with stale data.
@@ -245,10 +292,10 @@ export function SalaryProvider({ children }: { children: ReactNode }) {
               : lines.map((l) => l.count > 0).lastIndexOf(true);
         if (idx >= 0) lines[idx].count = Math.max(0, lines[idx].count + delta);
         const record = buildRecord({ ...base, [key]: lines }, existing);
-        await commitRecords([...records.filter((r) => r.id !== record.id), record]);
+        await commitDeferred([...records.filter((r) => r.id !== record.id), record]);
         return record;
       }),
-    [serial, commitRecords],
+    [serial, commitDeferred],
   );
 
   const deleteRecord = useCallback(
@@ -309,6 +356,8 @@ export function SalaryProvider({ children }: { children: ReactNode }) {
 
   const wipeLocal = useCallback(async () => {
     window.clearTimeout(pushTimer.current);
+    window.clearTimeout(writeTimer.current);
+    pendingWrite.current = false;
     await salaryStorage.wipeLocal();
     syncRef.current = await salaryStorage.loadSync();
     ref.current = { records: [], settings: DEFAULT_SETTINGS, profile: DEFAULT_PROFILE };

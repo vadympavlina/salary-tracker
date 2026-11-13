@@ -55,7 +55,9 @@ export function App() {
   if (path === '/') page = <HomePage />;
   else if (path === '/calculate') {
     page = <CalculatePage key={query.get('edit') ?? 'new'} />;
-    pushed = query.has('edit');
+    // A form with its own pinned action bar: like an iOS compose screen it hides the tab bar
+    // (two stacked floating bars ate ~140px of a 812px phone screen).
+    pushed = true;
   } else if (path === '/calculate/result') {
     page = <ResultPage />;
     pushed = true;
