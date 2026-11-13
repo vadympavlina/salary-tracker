@@ -1,4 +1,5 @@
-import { test, expect, type Locator, type Page } from '@playwright/test';
+import { type Locator, type Page } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { appReady, expectTappable, field, nb, settle, trackErrors, uah } from './helpers';
 
 test('month counter: +1 / −1 on the home screen, survives reload', async ({ page }) => {

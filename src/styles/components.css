@@ -25,7 +25,7 @@ a.btn--secondary:hover:not(:disabled) { background: var(--surface-2); }
 a.btn--tinted { background: var(--accent-soft); color: var(--accent-text); }
 a.btn--ghost { background: transparent; color: var(--accent-text); }
 a.btn--danger { background: var(--red-soft); color: var(--red-text); }
-a.btn--danger.grow { background: var(--red); color: #fff; }
+a.btn--danger.btn--solid { background: var(--red); color: #fff; }
 
 .icon-btn {
   display: inline-flex;
@@ -87,12 +87,8 @@ a.icon-btn--accent:hover { background: var(--accent-fill-hover); }
   border-radius: var(--r-lg);
   padding: 16px;
 }
-.card--flush { padding: 0; }
-.card__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .card__title { font-size: 17px; font-weight: 650; letter-spacing: -0.015em; }
 
-.section-title { display: flex; align-items: baseline; justify-content: space-between; margin: 4px 2px 10px; }
-.section-title h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
 
 /* ================= Grouped list (iOS inset grouped) ================= */
 .group-list { margin: 0; padding: 0; border: 0; min-width: 0; }
@@ -116,7 +112,6 @@ a.icon-btn--accent:hover { background: var(--accent-fill-hover); }
 .group-list__legend { float: left; width: 100%; }
 .group-list__legend + .group-list__body { clear: both; }
 .group-list__legend b { font-size: 13px; font-weight: 600; color: var(--text-2); }
-.group-list__meta { font-size: 13px; color: var(--text-3); }
 .group-list__body {
   position: relative;
   margin: 0;
@@ -187,7 +182,7 @@ a.icon-btn--accent:hover { background: var(--accent-fill-hover); }
   font-size: 16px;
 }
 .row--action { transition: background-color 0.15s; }
-.row--action:hover { background: var(--surface-2); }
+@media (hover: hover) { .row--action:hover { background: var(--surface-2); } }
 .row--action:active { background: var(--fill); }
 .row__label { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .row__title { font-size: 16px; font-weight: 400; letter-spacing: -0.01em; overflow-wrap: anywhere; }
@@ -315,64 +310,10 @@ a.icon-btn--accent:hover { background: var(--accent-fill-hover); }
   padding: 10px 16px;
   transition: background-color 0.15s;
 }
-.history-item:hover { background: var(--surface-2); }
+@media (hover: hover) { .history-item:hover { background: var(--surface-2); } }
 .history-item:active { background: var(--fill); }
-.history-item__main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .history-item__title { font-weight: 600; font-size: 16px; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.history-item__status { font-size: 13px; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.history-item__status--partial,
-.history-item__status--pending { color: var(--orange); }
-.history-item__side { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
-.history-item__amount { font-weight: 650; font-size: 16px; white-space: nowrap; }
-.history-item__gross { font-size: 13px; color: var(--text-3); white-space: nowrap; }
-.history-group + .history-group { margin-top: 26px; }
-
-/* ================= Segmented ================= */
-.segmented {
-  position: relative;
-  display: grid;
-  grid-template-columns: repeat(var(--count), minmax(0, 1fr));
-  padding: 3px;
-  border-radius: 14px;
-  background: var(--segmented-bg);
-}
-.segmented__thumb {
-  position: absolute;
-  top: 3px;
-  bottom: 3px;
-  left: 3px;
-  width: calc((100% - 6px) / var(--count));
-  border-radius: 11px;
-  background: var(--segmented-thumb);
-  box-shadow: 0 1px 3px rgba(21, 21, 43, 0.12), 0 0 0 0.5px rgba(21, 21, 43, 0.04);
-  transform: translateX(calc(100% * var(--index)));
-  transition: transform 0.32s var(--spring);
-}
-.segmented__item {
-  position: relative;
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-height: 40px;
-  padding: 0 6px;
-  border: 0;
-  background: none;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-2);
-  white-space: nowrap;
-  border-radius: 11px;
-  transition: color 0.2s;
-}
-.segmented__item[aria-checked='true'] { color: var(--text); }
 .segmented__badge { font-size: 11.5px; font-weight: 700; color: var(--text-3); }
-.segmented--sm .segmented__item { min-height: 34px; font-size: 13px; }
-@media (pointer: coarse) {
-  .segmented__item,
-  .segmented--sm .segmented__item { min-height: 44px; }
-}
 
 /* ================= Form cells ================= */
 .calc__fields { display: flex; flex-direction: column; gap: 26px; }
@@ -498,7 +439,7 @@ a.icon-btn--accent:hover { background: var(--accent-fill-hover); }
   border: 0; border-radius: 50%; background: none; color: var(--text-2);
 }
 .rate-line__remove svg { box-sizing: content-box; padding: 6px; border-radius: 50%; background: var(--fill); }
-.rate-line__remove:hover { background: var(--red-soft); color: var(--red); }
+@media (hover: hover) { .rate-line__remove:hover { background: var(--red-soft); color: var(--red); } }
 .add-line {
   display: flex; align-items: center; gap: 10px;
   width: 100%; min-height: 48px; padding: 0 16px;
@@ -506,7 +447,7 @@ a.icon-btn--accent:hover { background: var(--accent-fill-hover); }
   font-size: 16px; font-weight: 500; text-align: left;
   transition: background-color 0.15s;
 }
-.add-line:hover { background: var(--surface-2); }
+@media (hover: hover) { .add-line:hover { background: var(--surface-2); } }
 .add-line:active { background: var(--fill); }
 
 /* "На руки" cell inside the form */
@@ -589,7 +530,6 @@ a.icon-btn--accent:hover { background: var(--accent-fill-hover); }
 .bd-total .row__value { font-size: 19px; font-weight: 700; }
 .bd-total .row__sub { color: var(--accent-text); }
 .tone-green { color: var(--green); }
-.tone-red { color: var(--red); }
 .tone-orange { color: var(--orange); }
 .tone-muted { color: var(--text-3); }
 .tone-accent { color: var(--accent-text); }
@@ -657,7 +597,7 @@ a.icon-btn--accent:hover { background: var(--accent-fill-hover); }
   width: 100%; padding: 8px 10px; border: 0; border-radius: 12px;
   background: none; text-align: left;
 }
-.legend__item:hover, .legend__item.is-active { background: var(--surface-2); }
+@media (hover: hover) { .legend__item:hover, .legend__item.is-active { background: var(--surface-2); } }
 .legend__dot { width: 10px; height: 10px; border-radius: 3px; grid-row: 1 / 3; }
 .legend__label { font-size: 14px; font-weight: 600; }
 .legend__value { grid-column: 2; font-size: 12.5px; color: var(--text-3); }
@@ -682,7 +622,7 @@ a.icon-btn--accent:hover { background: var(--accent-fill-hover); }
 /* ================= Settings ================= */
 .settings { display: flex; flex-direction: column; gap: 28px; }
 .profile-card { display: flex; align-items: center; gap: 14px; width: 100%; border: 0; text-align: left; padding: 14px 16px; transition: background-color 0.15s; }
-.profile-card:hover { background: var(--surface-2); }
+@media (hover: hover) { .profile-card:hover { background: var(--surface-2); } }
 .profile-card:active { background: var(--fill); }
 .profile-card__text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .profile-card__text b { font-size: 19px; font-weight: 600; letter-spacing: -0.015em; }
@@ -827,7 +767,7 @@ html.modal-open { overflow: hidden; }
   color: var(--text-2); font-size: 15px; font-weight: 600;
 }
 .login__local small { font-size: 12.5px; font-weight: 500; color: var(--text-3); }
-.login__local:hover { background: var(--surface-2); }
+@media (hover: hover) { .login__local:hover { background: var(--surface-2); } }
 
 .account { display: flex; flex-direction: column; margin: 0; }
 .account > div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px dashed var(--border); }
@@ -892,11 +832,7 @@ html.modal-open { overflow: hidden; }
 @media (max-width: 419px) {
   .action-bar--sticky .btn { flex: 1 1 0; min-width: 0; padding: 0 12px; }
   .action-bar--sticky .btn.grow { flex-grow: 1.6; }
-}
-/* Very narrow phones: the secondary action collapses to its icon (it keeps its aria-label). */
-@media (max-width: 379px) {
-  .action-bar--sticky .btn--compact { flex: 0 0 52px; padding: 0; }
-  .action-bar--sticky .btn--compact span { display: none; }
+  .action-bar--sticky .btn--icon-only { flex: 0 0 52px; padding: 0; }
 }
 
 /* Per-rate comment: a quiet one-line cell under count × rate */
@@ -928,6 +864,8 @@ html.modal-open { overflow: hidden; }
   -webkit-overflow-scrolling: touch;
 }
 .month-chips::-webkit-scrollbar { display: none; }
+/* Snapping to the first chip must respect the page gutter, or it sticks to the screen edge. */
+.month-chips { scroll-padding-inline: var(--gutter); }
 .month-chip {
   position: relative;
   flex: 0 0 auto;
@@ -1013,7 +951,7 @@ html.modal-open { overflow: hidden; }
   background: var(--surface);
   transition: transform 0.14s var(--ease), background-color 0.2s;
 }
-.month-tile:hover { background: var(--surface-2); }
+@media (hover: hover) { .month-tile:hover { background: var(--surface-2); } }
 .month-tile:active { transform: scale(0.97); }
 .month-tile__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .month-tile__month { font-size: 16px; font-weight: 650; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1026,7 +964,7 @@ html.modal-open { overflow: hidden; }
 .month-tile--waiting { background: linear-gradient(165deg, var(--surface) 45%, var(--orange-soft)); }
 .month-tile--waiting .month-tile__month, .month-tile--waiting .month-tile__sub { color: var(--orange); }
 .month-tile--current { background: linear-gradient(150deg, #7b6cf4 0%, #5242d3 100%); color: #fff; box-shadow: var(--shadow-accent); }
-.month-tile--current:hover { background: linear-gradient(150deg, #7b6cf4 0%, #4a3bc6 100%); }
+@media (hover: hover) { .month-tile--current:hover { background: linear-gradient(150deg, #7b6cf4 0%, #4a3bc6 100%); } }
 .month-tile--current .month-tile__month, .month-tile--current .month-tile__sub { color: rgba(255, 255, 255, 0.85); }
 .month-tile--current .month-tile__dot { box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85); }
 .month-tile--new {
@@ -1040,7 +978,7 @@ html.modal-open { overflow: hidden; }
   font-weight: 600;
   font-size: 15px;
 }
-.month-tile--new:hover { background: var(--accent-soft); }
+@media (hover: hover) { .month-tile--new:hover { background: var(--accent-soft); } }
 
 /* Tiles reveal their actions as one narrow stacked strip. */
 .swipe--column .swipe__actions { flex-direction: column; }
@@ -1069,7 +1007,7 @@ a.btn--secondary { background: var(--glass); color: var(--text); box-shadow: var
 a.btn--secondary:hover:not(:disabled), a.btn--secondary:active:not(:disabled) { background: var(--glass-pressed); }
 a.btn--tinted { background: var(--glass); color: var(--accent-text); box-shadow: var(--glass-shine); }
 a.btn--danger { background: var(--glass-danger); color: var(--red-text); box-shadow: var(--glass-shine); }
-a.btn--danger.grow { background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 55%), var(--red); color: #fff; box-shadow: var(--glass-tint-shine); }
+a.btn--danger.btn--solid { background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 55%), var(--red); color: #fff; box-shadow: var(--glass-tint-shine); }
 
 .icon-btn { transition: transform 0.35s var(--spring-out), background-color 0.2s; }
 .icon-btn:active { transform: scale(1.1); }
@@ -1112,19 +1050,6 @@ a.page-header__back,
 .month-chip.is-on { background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 55%), #15152b; color: #fff; box-shadow: inset 0 1px 0.5px rgba(255, 255, 255, 0.35), 0 6px 16px -8px rgba(0, 0, 0, 0.5); }
 :root[data-theme='dark'] .month-chip.is-on { background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.78)); color: #111118; box-shadow: inset 0 1px 0.5px #fff, 0 6px 16px -8px rgba(0, 0, 0, 0.6); }
 
-/* Segmented control: glass track with a lens thumb */
-.segmented { border-radius: var(--r-pill); padding: 4px; background: var(--glass); box-shadow: var(--glass-shine); }
-.segmented__thumb {
-  top: 4px;
-  bottom: 4px;
-  left: 4px;
-  width: calc((100% - 8px) / var(--count));
-  border-radius: var(--r-pill);
-  background: var(--glass-thumb);
-  box-shadow: var(--glass-thumb-shadow);
-}
-.segmented__item { border-radius: var(--r-pill); }
-
 /* Calculate: the floating "На руки … Розрахувати" capsule */
 .action-bar--calc { border-radius: var(--r-pill); padding: 8px 8px 8px 22px; background: var(--glass-bar); box-shadow: var(--glass-bar-shadow); }
 @media (min-width: 1024px) {
@@ -1138,7 +1063,6 @@ a.page-header__back,
 @media (min-width: 360px) {
   .field--row .field__label { white-space: nowrap; }
 }
-
 
 /* ================= Glisse buttons: our sizes on top of Liquid Glass ================= */
 .glass-btn { font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; }
@@ -1155,7 +1079,8 @@ a.page-header__back,
 .glass-btn.btn, .glass-btn.icon-btn { transition: background-color 0.2s, opacity 0.2s; }
 
 /* Segmented controls = Glisse tab bars stretched to the row */
-.glass-tabs { width: 100%; min-width: 0; }
+.glass-tabs { width: 100%; min-width: 0; container-type: inline-size; }
+.glass-tabs .lg-tab-bar { --lg-tab-width: calc((100cqw - 8px) / var(--tabs, 4)); }
 .glass-tabs .lg-tab-bar { width: 100%; }
 .segmented-glass .lg-tab-bar { --lg-tab-height: 38px; }
 .segmented-glass--sm .lg-tab-bar { --lg-tab-height: 34px; }
@@ -1174,3 +1099,44 @@ a.page-header__back,
 @media (pointer: coarse) {
   .toast__action { min-height: 44px; padding: 0 14px; }
 }
+
+/* ================= Design-review fixes ================= */
+/* "+ Листопад" placeholder tile: centred label (the later .month-tile rule used to push it to the top). */
+.month-tile.month-tile--new { align-items: center; justify-content: center; }
+
+/* Icon-only danger button in the record action bar. */
+.glass-btn.btn--lg[data-icon='only'] { width: 52px; height: 52px; padding: 0; border-radius: 50%; }
+
+/* Glisse popover menu: comfortable rows on touch screens. */
+@media (pointer: coarse) {
+  .lg-menu-item { min-height: 44px; font-size: 16px; }
+}
+
+/* Month chips on desktop: no hidden horizontal scroll — they wrap. */
+@media (min-width: 1024px) {
+  .month-chips { flex-wrap: wrap; overflow: visible; scroll-snap-type: none; }
+}
+
+/* Segmented controls stay a sensible width on large screens. */
+@media (min-width: 700px) {
+  .toolbar > .glass-tabs:only-child { max-width: 460px; }
+}
+
+/* Native-app feel: no text selection / long-press "Copy · Look up" bubble. Fields stay editable. */
+body {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+input, textarea, [contenteditable='true'] {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
+@media (pointer: coarse) {
+  .btn--sm, .glass-btn.btn--sm { height: 44px; }
+}
+/* Toasts live in the top layer (popover) so they show above open dialogs. */
+.toasts[popover] { border: 0; padding: 0; background: transparent; overflow: visible; inset: auto; top: calc(var(--safe-t) + 12px); left: 50%; transform: translateX(-50%); margin: 0; width: min(calc(100% - 24px), 420px); }
+.toasts[popover]:not(:popover-open) { display: none; }

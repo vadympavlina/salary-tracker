@@ -56,10 +56,10 @@ const THEME_LABEL: Record<ThemePreference, string> = { light: 'Світла', da
 const THEME_ICON: Record<ThemePreference, ReactNode> = { light: <Sun size={17} strokeWidth={2.3} />, dark: <Moon size={17} strokeWidth={2.3} />, system: <SunMoon size={17} strokeWidth={2.3} /> };
 
 const RATE_META = {
-  pairRate: { title: 'Ставка за пару', label: 'Ставка за пару', icon: <Banknote size={20} /> },
-  videoRate: { title: 'Ставка за відео', label: 'Ставка за відео', icon: <Wallet size={20} /> },
-  defaultAdvance: { title: 'Аванс за замовчуванням', label: 'Сума авансу', icon: <HandCoins size={20} /> },
-  defaultCard: { title: 'Сума на картку', label: 'Щомісяця приходить на картку', icon: <CreditCard size={20} /> },
+  pairRate: { title: 'Ставка за пару', label: 'Ставка', hint: 'Підставляється в кожен новий місяць', icon: <Banknote size={20} /> },
+  videoRate: { title: 'Ставка за відео', label: 'Ставка', hint: 'Підставляється в кожен новий місяць', icon: <Wallet size={20} /> },
+  defaultAdvance: { title: 'Аванс за замовчуванням', label: 'Аванс', hint: 'Можна змінити для конкретного місяця', icon: <HandCoins size={20} /> },
+  defaultCard: { title: 'Сума на картку', label: 'Сума', hint: 'Щомісяця приходить на картку; віднімається від суми на руки', icon: <CreditCard size={20} /> },
 } as const;
 
 export function SettingsPage() {
@@ -231,7 +231,7 @@ export function SettingsPage() {
           </Button>
         }
       >
-        {isRateEditor && <CurrencyInput label={RATE_META[editor].label} value={value} onChange={setValue} icon={RATE_META[editor].icon} max={10_000_000} />}
+        {isRateEditor && <CurrencyInput label={RATE_META[editor].label} hint={RATE_META[editor].hint} value={value} onChange={setValue} icon={RATE_META[editor].icon} max={10_000_000} />}
       </Modal>
 
       {/* Theme — applied instantly so the choice can be previewed */}
@@ -338,6 +338,7 @@ export function SettingsPage() {
             </Button>
             <Button
               variant="danger"
+              solid
               className="grow"
               icon={<Trash2 size={18} />}
               onClick={async () => {
@@ -387,6 +388,7 @@ export function SettingsPage() {
             </Button>
             <Button
               variant="danger"
+              solid
               className="grow"
               icon={<LogOut size={18} />}
               onClick={async () => {

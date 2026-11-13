@@ -9,6 +9,8 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: 'lg' | 'md' | 'sm';
   icon?: ReactNode;
   block?: boolean;
+  /** danger only: filled red (final confirmation) instead of red glass. */
+  solid?: boolean;
   /** Renders a router link styled as a button. */
   to?: string;
 }
@@ -19,17 +21,17 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
  * danger → red glass (with the `grow` class: red filled, for the confirm step).
  * Links stay real <a> elements (navigation) and get the same look from our CSS.
  */
-export function Button({ variant = 'primary', size = 'lg', icon, block, to, className = '', children, type = 'button', ...rest }: Props) {
-  const cls = `btn btn--${variant} btn--${size}${block ? ' btn--block' : ''} ${className}`.trim();
+export function Button({ variant = 'primary', size = 'lg', icon, block, solid, to, className = '', children, type = 'button', ...rest }: Props) {
+  const cls = `btn btn--${variant} btn--${size}${block ? ' btn--block' : ''}${solid ? ' btn--solid' : ''} ${className}`.trim();
   if (to) {
     return (
-      <Link to={to} className={cls} aria-label={rest['aria-label']}>
+      <Link to={to} className={cls} aria-label={rest['aria-label']} onClick={rest.onClick as never}>
         {icon}
         {children && <span>{children}</span>}
       </Link>
     );
   }
-  const filled = variant === 'primary' || (variant === 'danger' && /\bgrow\b/.test(className));
+  const filled = variant === 'primary' || (variant === 'danger' && solid);
   return (
     <GlassButton
       type={type}

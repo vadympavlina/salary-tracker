@@ -127,6 +127,11 @@ function CounterRow({ kind, label, forms, value, detail, icon, onBump }: RowProp
         bump(delta);
       }
     },
+    // Screen readers and voice control activate buttons with a synthesized click (detail 0), which
+    // never produces pointer events; real taps are already handled on pointerdown.
+    onClick: (e: React.MouseEvent) => {
+      if (e.detail === 0) bump(delta);
+    },
     onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
   });
 
@@ -137,8 +142,10 @@ function CounterRow({ kind, label, forms, value, detail, icon, onBump }: RowProp
         <b>{label}</b>
         <small className="num">{detail}</small>
       </span>
-      <span key={pop} className="counter__value num pop" aria-live="polite" aria-atomic="true">
-        {formatNumber(value)}
+      <span className="counter__value num" aria-live="polite" aria-atomic="true">
+        <span key={pop} className="pop">
+          {formatNumber(value)}
+        </span>
         <span className="sr-only"> {plural(value, forms)}</span>
       </span>
       <span className="counter__controls">

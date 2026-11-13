@@ -46,11 +46,15 @@ export function RecordPage({ id }: { id: string }) {
 
   const remove = async () => {
     setConfirm(false);
-    const removed = await deleteRecord(record.id);
-    // Replace, not back(): the entry behind this screen may be the edit form of the deleted month.
-    navigate('/history', { replace: true });
-    if (removed) {
-      toast(`${title} видалено`, { tone: 'info', action: { label: 'Скасувати', onClick: () => restoreRecord(removed) } });
+    try {
+      const removed = await deleteRecord(record.id);
+      // Replace, not back(): the entry behind this screen may be the edit form of the deleted month.
+      navigate('/history', { replace: true });
+      if (removed) {
+        toast(`${title} видалено`, { tone: 'info', action: { label: 'Скасувати', onClick: () => restoreRecord(removed).catch(() => toast('Не вдалося повернути запис', { tone: 'error' })) } });
+      }
+    } catch {
+      toast('Не вдалося видалити. Перевір вільне місце в браузері.', { tone: 'error' });
     }
   };
 
@@ -124,9 +128,7 @@ export function RecordPage({ id }: { id: string }) {
         />
       </div>
       <div className="action-bar action-bar--sticky">
-        <Button variant="danger" icon={<Trash2 size={18} />} onClick={() => setConfirm(true)} aria-label="Видалити" className="btn--compact">
-          Видалити
-        </Button>
+        <Button variant="danger" icon={<Trash2 size={20} />} onClick={() => setConfirm(true)} aria-label="Видалити" className="btn--icon-only" />
         <Button icon={<PencilLine size={18} />} onClick={edit} className="grow">
           Редагувати
         </Button>
@@ -142,7 +144,7 @@ export function RecordPage({ id }: { id: string }) {
             <Button variant="secondary" onClick={() => setConfirm(false)}>
               Скасувати
             </Button>
-            <Button variant="danger" className="grow" icon={<Trash2 size={18} />} onClick={remove}>
+            <Button variant="danger" solid className="grow" icon={<Trash2 size={18} />} onClick={remove}>
               Видалити
             </Button>
           </>

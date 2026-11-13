@@ -80,8 +80,12 @@ function Swipeable({ record, children }: { record: SalaryRecord; children: React
           tone: 'red',
           icon: <Trash2 size={18} />,
           onClick: async () => {
-            const removed = await deleteRecord(record.id);
-            if (removed) toast(`${title} видалено`, { tone: 'info', action: { label: 'Скасувати', onClick: () => restoreRecord(removed) } });
+            try {
+              const removed = await deleteRecord(record.id);
+              if (removed) toast(`${title} видалено`, { tone: 'info', action: { label: 'Скасувати', onClick: () => restoreRecord(removed).catch(() => toast('Не вдалося повернути запис', { tone: 'error' })) } });
+            } catch {
+              toast('Не вдалося видалити. Перевір вільне місце в браузері.', { tone: 'error' });
+            }
           },
         },
       ]}

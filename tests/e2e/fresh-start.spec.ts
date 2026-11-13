@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { appReady, field, nb, offlineCloud, trackErrors, uah } from './helpers';
 
 // A brand-new install: no sample data at all (and no real network to Firebase).

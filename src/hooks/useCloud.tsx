@@ -24,7 +24,12 @@ const USER_KEY = 'salary_cloud_user';
 const readCachedUser = (): CloudUser | null | undefined => {
   try {
     const raw = localStorage.getItem(USER_KEY);
-    return raw ? (JSON.parse(raw) as CloudUser) : undefined;
+    if (!raw) return undefined;
+    const v: unknown = JSON.parse(raw);
+    // A corrupt/foreign value must not be mistaken for a signed-in user.
+    if (v === null) return null;
+    const u = v as Partial<CloudUser>;
+    return v && typeof v === 'object' && typeof u.uid === 'string' && u.uid ? (u as CloudUser) : undefined;
   } catch {
     return undefined;
   }

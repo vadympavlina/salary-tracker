@@ -1,4 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
+import { type Page } from '@playwright/test';
+import { test, expect, TEST_NOW } from './fixtures';
 import { appReady, field } from './helpers';
 import { buildRecord } from '../../src/services/storage/salaryStorage';
 import { SAMPLE_INPUTS } from '../fixtures/sampleMonths';
@@ -62,7 +63,7 @@ test.describe('fresh device', () => {
     await appReady(page);
 
     for (let i = 0; i < 4; i++) await page.getByRole('button', { name: 'Пари: плюс один' }).click();
-    const period = currentPeriod();
+    const period = currentPeriod(TEST_NOW);
     await expect.poll(async () => (await cloud(page)).records?.[period]?.pairItems?.[0]?.count, { timeout: 5000 }).toBe(4);
 
     // Deleting a month reaches the cloud as a tombstone.

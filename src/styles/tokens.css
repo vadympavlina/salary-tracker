@@ -32,7 +32,7 @@
 
   --segmented-bg: rgba(118, 118, 128, 0.12);
   --segmented-thumb: #ffffff;
-  --placeholder: #b5b5c0;
+  --placeholder: #8e8e99;
   --glass-border: rgba(255, 255, 255, 0.7);
   --bg-transparent: rgba(242, 242, 247, 0);
 
@@ -177,7 +177,7 @@
 
   --segmented-bg: rgba(118, 118, 128, 0.24);
   --segmented-thumb: #636366;
-  --placeholder: #5c5c66;
+  --placeholder: #8a8a94;
   --glass-border: rgba(255, 255, 255, 0.08);
   --bg-transparent: rgba(0, 0, 0, 0);
 

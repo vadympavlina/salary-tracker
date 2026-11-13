@@ -1,4 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
+import { type Page } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { appReady, expectTappable, field, scrollToBottom, settle, trackErrors } from './helpers';
 
 const PAGES = [
@@ -144,7 +145,7 @@ test('dialogs fit the viewport and close with Escape', async ({ page }) => {
   expect(box!.y).toBeGreaterThanOrEqual(0);
   expect(box!.y + box!.height).toBeLessThanOrEqual(vp.height + 1);
   await expectTappable(dialog.getByRole('button', { name: 'Зберегти' }));
-  await expect(dialog.getByLabel('Ставка за пару')).toBeVisible();
+  await expect(dialog.getByLabel('Ставка', { exact: true })).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(dialog).toBeHidden();
 });
@@ -199,4 +200,51 @@ test('no zooming: viewport locks the scale and no field is small enough for iOS 
     );
     expect(small, `${path}: fields under 16px`).toEqual([]);
   }
+});
+
+test('toasts appear above an open dialog', async ({ page }) => {
+  await page.goto('#/settings');
+  await appReady(page);
+  await page.getByRole('button', { name: /Тема/ }).first().click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  // "Доступна нова версія" is the app's own toast; fire it while the sheet is open.
+  await page.evaluate(() => window.dispatchEvent(new Event('app-updated')));
+  const toast = page.locator('.toast').first();
+  await expect(toast).toBeVisible();
+  // Top-layer popover opened after the dialog → painted above it (elementFromPoint can't tell: the page behind a modal is inert).
+  expect(await page.locator('.toasts').evaluate((el) => el.matches(':popover-open'))).toBe(true);
+});
+
+test('text is not selectable (native-app feel), form fields still are', async ({ page }) => {
+  await page.goto('#/calculate?new=1');
+  await appReady(page);
+  const sel = (selector: string) => page.locator(selector).first().evaluate((el) => getComputedStyle(el).userSelect || getComputedStyle(el).webkitUserSelect);
+  expect(await sel('main h1')).toBe('none');
+  expect(await sel('.group-list__header')).toBe('none');
+  expect(await sel('input.field__input')).toBe('text');
+  expect(await sel('textarea')).toBe('text');
+});
+
+test('home: the first month chip respects the page gutter (not glued to the screen edge)', async ({ page }, testInfo) => {
+  test.skip(!testInfo.project.use.isMobile, 'phone layout');
+  await page.goto('./');
+  await appReady(page);
+  const { chip, card } = await page.evaluate(() => ({
+    chip: document.querySelector('.month-chip')!.getBoundingClientRect().left,
+    card: document.querySelector('.hero')!.getBoundingClientRect().left,
+  }));
+  expect(Math.abs(chip - card)).toBeLessThanOrEqual(1);
+});
+
+test('record screen: delete stays reachable and is not clipped on narrow phones', async ({ page }) => {
+  await page.goto('#/history');
+  await appReady(page);
+  await page.locator('.history-item').first().click();
+  const del = page.getByRole('button', { name: 'Видалити' });
+  await expect(del).toBeVisible();
+  const box = (await del.boundingBox())!;
+  const vw = page.viewportSize()!.width;
+  expect(box.x).toBeGreaterThanOrEqual(0);
+  expect(box.x + box.width).toBeLessThanOrEqual(vw);
+  expect(box.width).toBeGreaterThanOrEqual(44);
 });

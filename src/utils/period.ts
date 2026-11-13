@@ -36,12 +36,6 @@ export function formatMonthShort(period: Period): string {
   return MONTHS_SHORT[parsePeriod(period).month - 1];
 }
 
-/** "2026-10" → "01.10.2026" */
-export function formatPeriodDate(period: Period): string {
-  const { year, month } = parsePeriod(period);
-  return `01.${String(month).padStart(2, '0')}.${year}`;
-}
-
 export function formatDateTime(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';

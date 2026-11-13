@@ -40,7 +40,7 @@ export function App() {
   }, [toast]);
 
   useEffect(() => {
-    document.title = `${TITLES[path] ?? (path.startsWith('/history/') ? 'Деталі' : 'Зарплата')} · Зарплата`;
+    document.title = TITLES[path] ? `${TITLES[path]} · Зарплата` : path.startsWith('/history/') ? 'Деталі · Зарплата' : 'Не знайдено · Зарплата';
   }, [path]);
 
   if (!ready) return null;

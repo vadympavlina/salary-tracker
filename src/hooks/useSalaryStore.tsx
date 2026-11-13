@@ -18,7 +18,10 @@ const DRAFT_KEY = 'salary_draft';
 function readDraft(): Draft | null {
   try {
     const raw = sessionStorage.getItem(DRAFT_KEY);
-    return raw ? (JSON.parse(raw) as Draft) : null;
+    if (!raw) return null;
+    const v = JSON.parse(raw) as Partial<Draft> | null;
+    // Only a draft with a real input object is restored (anything else would crash the form).
+    return v && typeof v === 'object' && v.input && typeof v.input === 'object' && typeof v.input.period === 'string' ? (v as Draft) : null;
   } catch {
     return null;
   }
@@ -182,8 +185,16 @@ export function SalaryProvider({ children }: { children: ReactNode }) {
       // The deletion must be "newer" than the record it removes, whatever this device's clock says.
       for (const r of ref.current.records) if (!kept.has(r.period)) tombstones[r.period] = stamp(r.updatedAt);
       for (const p of kept) delete tombstones[p];
+      const previous = syncRef.current.tombstones;
       await saveSync({ tombstones });
-      const sorted = await salaryStorage.saveRecords(records);
+      let sorted: SalaryRecord[];
+      try {
+        sorted = await salaryStorage.saveRecords(records);
+      } catch (e) {
+        // Storage refused (quota…): the deletion didn't happen, so it must not reach the cloud either.
+        await saveSync({ tombstones: previous }).catch(() => undefined);
+        throw e;
+      }
       ref.current = { ...ref.current, records: sorted };
       setData((d) => ({ ...d, records: sorted }));
       schedulePush();
@@ -191,17 +202,20 @@ export function SalaryProvider({ children }: { children: ReactNode }) {
     [saveSync, schedulePush],
   );
 
+  // Every write goes through the same queue as the counter taps, so a save, delete, undo or
+  // settings change can never interleave with another write and overwrite it with stale data.
   const saveRecord = useCallback(
-    async (input: SalaryInput, editId?: string) => {
-      const records = ref.current.records;
-      const existing = (editId && records.find((r) => r.id === editId)) || records.find((r) => r.period === input.period);
-      const record = buildRecord(input, existing);
-      // Drop the edited row and any other row occupying the same month.
-      const rest = records.filter((r) => r.id !== record.id && r.period !== record.period);
-      await commitRecords([...rest, record]);
-      return record;
-    },
-    [commitRecords],
+    (input: SalaryInput, editId?: string) =>
+      serial(async () => {
+        const records = ref.current.records;
+        const existing = (editId && records.find((r) => r.id === editId)) || records.find((r) => r.period === input.period);
+        const record = buildRecord(input, existing);
+        // Drop the edited row and any other row occupying the same month.
+        const rest = records.filter((r) => r.id !== record.id && r.period !== record.period);
+        await commitRecords([...rest, record]);
+        return record;
+      }),
+    [serial, commitRecords],
   );
 
   const bumpCurrentMonth = useCallback(
@@ -238,56 +252,60 @@ export function SalaryProvider({ children }: { children: ReactNode }) {
   );
 
   const deleteRecord = useCallback(
-    async (id: string) => {
-      const removed = ref.current.records.find((r) => r.id === id);
-      await commitRecords(ref.current.records.filter((r) => r.id !== id));
-      return removed;
-    },
-    [commitRecords],
+    (id: string) =>
+      serial(async () => {
+        const removed = ref.current.records.find((r) => r.id === id);
+        await commitRecords(ref.current.records.filter((r) => r.id !== id));
+        return removed;
+      }),
+    [serial, commitRecords],
   );
 
   const restoreRecord = useCallback(
-    async (record: SalaryRecord) => {
-      // Restored months count as a fresh edit so they win over their own deletion.
-      const restored = { ...record, updatedAt: stamp(record.updatedAt, syncRef.current.tombstones[record.period]) };
-      await commitRecords([...ref.current.records.filter((r) => r.period !== record.period), restored]);
-    },
-    [commitRecords],
+    (record: SalaryRecord) =>
+      serial(async () => {
+        // Restored months count as a fresh edit so they win over their own deletion.
+        const restored = { ...record, updatedAt: stamp(record.updatedAt, syncRef.current.tombstones[record.period]) };
+        await commitRecords([...ref.current.records.filter((r) => r.period !== record.period), restored]);
+      }),
+    [serial, commitRecords],
   );
 
   const updateSettings = useCallback(
-    async (patch: Partial<SalarySettings>) => {
-      const settings = { ...ref.current.settings, ...patch };
-      await salaryStorage.saveSettings(settings);
-      const fields = [...new Set([...(syncRef.current.settingsFields ?? []), ...Object.keys(patch)])];
-      await saveSync({ settingsAt: stamp(syncRef.current.settingsAt), settingsFields: fields });
-      ref.current = { ...ref.current, settings };
-      setData((d) => ({ ...d, settings }));
-      schedulePush();
-    },
-    [saveSync, schedulePush],
+    (patch: Partial<SalarySettings>) =>
+      serial(async () => {
+        const settings = { ...ref.current.settings, ...patch };
+        await salaryStorage.saveSettings(settings);
+        const fields = [...new Set([...(syncRef.current.settingsFields ?? []), ...Object.keys(patch)])];
+        await saveSync({ settingsAt: stamp(syncRef.current.settingsAt), settingsFields: fields });
+        ref.current = { ...ref.current, settings };
+        setData((d) => ({ ...d, settings }));
+        schedulePush();
+      }),
+    [serial, saveSync, schedulePush],
   );
 
   const updateProfile = useCallback(
-    async (patch: Partial<SalaryProfile>) => {
-      const profile = { ...ref.current.profile, ...patch };
-      await salaryStorage.saveProfile(profile);
-      const fields = [...new Set([...(syncRef.current.profileFields ?? []), ...Object.keys(patch)])];
-      await saveSync({ profileAt: stamp(syncRef.current.profileAt), profileFields: fields });
-      ref.current = { ...ref.current, profile };
-      setData((d) => ({ ...d, profile }));
-      schedulePush();
-    },
-    [saveSync, schedulePush],
+    (patch: Partial<SalaryProfile>) =>
+      serial(async () => {
+        const profile = { ...ref.current.profile, ...patch };
+        await salaryStorage.saveProfile(profile);
+        const fields = [...new Set([...(syncRef.current.profileFields ?? []), ...Object.keys(patch)])];
+        await saveSync({ profileAt: stamp(syncRef.current.profileAt), profileFields: fields });
+        ref.current = { ...ref.current, profile };
+        setData((d) => ({ ...d, profile }));
+        schedulePush();
+      }),
+    [serial, saveSync, schedulePush],
   );
 
   /** "Видалити всі дані": deletes everywhere (synced as deletions + default settings). */
   const clearAll = useCallback(async () => {
-    await commitRecords([]);
+    await serial(() => commitRecords([]));
     await updateSettings(DEFAULT_SETTINGS);
     await updateProfile(DEFAULT_PROFILE);
     setDraft(null);
-  }, [commitRecords, updateSettings, updateProfile, setDraft]);
+  }, [serial, commitRecords, updateSettings, updateProfile, setDraft]);
 
   const wipeLocal = useCallback(async () => {
     window.clearTimeout(pushTimer.current);
@@ -301,21 +319,23 @@ export function SalaryProvider({ children }: { children: ReactNode }) {
   const importData = useCallback(
     async (incoming: AppData, mode: 'replace' | 'merge') => {
       // Imported months are a fresh edit: they must win over older copies in the cloud.
-      const mine = new Map(ref.current.records.map((r) => [r.period, r.updatedAt]));
-      let records = incoming.records.map((r) => ({ ...r, updatedAt: stamp(mine.get(r.period), syncRef.current.tombstones[r.period]) }));
-      if (mode === 'merge') {
-        // Imported months win over existing ones.
-        const periods = new Set(incoming.records.map((r) => r.period));
-        records = [...ref.current.records.filter((r) => !periods.has(r.period)), ...records];
-      }
-      await commitRecords(records);
+      await serial(async () => {
+        const mine = new Map(ref.current.records.map((r) => [r.period, r.updatedAt]));
+        let records = incoming.records.map((r) => ({ ...r, updatedAt: stamp(mine.get(r.period), syncRef.current.tombstones[r.period]) }));
+        if (mode === 'merge') {
+          // Imported months win over existing ones.
+          const periods = new Set(incoming.records.map((r) => r.period));
+          records = [...ref.current.records.filter((r) => !periods.has(r.period)), ...records];
+        }
+        await commitRecords(records);
+      });
       if (mode === 'replace') {
         await updateSettings(incoming.settings);
         await updateProfile(incoming.profile);
       }
       return incoming.records.length;
     },
-    [commitRecords, updateSettings, updateProfile],
+    [serial, commitRecords, updateSettings, updateProfile],
   );
 
   const value = useMemo<SalaryStore>(

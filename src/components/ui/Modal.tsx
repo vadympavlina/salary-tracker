@@ -19,6 +19,7 @@ export function Modal({ open, onClose, title, description, children, footer }: P
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   const descId = useId();
+  const downOnBackdrop = useRef(false);
 
   useEffect(() => {
     const d = ref.current;
@@ -42,9 +43,14 @@ export function Modal({ open, onClose, title, description, children, footer }: P
         e.preventDefault();
         onClose();
       }}
+      onPointerDown={(e) => {
+        downOnBackdrop.current = e.target === e.currentTarget;
+      }}
       onClick={(e) => {
-        // Click on the backdrop (the dialog element itself, outside the panel) closes.
-        if (e.target === e.currentTarget) onClose();
+        // Closes only when the press began AND ended on the backdrop: dragging a text selection
+        // out of a field and releasing outside the panel must not discard what was typed.
+        if (e.target === e.currentTarget && downOnBackdrop.current) onClose();
+        downOnBackdrop.current = false;
       }}
     >
       {open && (

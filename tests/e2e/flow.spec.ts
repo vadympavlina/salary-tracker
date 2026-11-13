@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { field, nb, trackErrors, uah } from './helpers';
 
 test('full flow: create → calculate → save → history → edit → delete → analytics → export → import', async ({ page }) => {
@@ -82,7 +82,7 @@ test('full flow: create → calculate → save → history → edit → delete �
   await page.getByRole('link', { name: 'Головна' }).first().click();
   await page.getByRole('link', { name: 'Профіль' }).first().click();
   await page.getByRole('button', { name: /Ставка за пару/ }).click();
-  await page.getByRole('dialog').getByLabel('Ставка за пару').fill('400');
+  await page.getByRole('dialog').getByLabel('Ставка', { exact: true }).fill('400');
   await page.getByRole('dialog').getByRole('button', { name: 'Зберегти' }).click();
   await expect(page.getByRole('button', { name: /Ставка за пару.*400/ })).toBeVisible();
 

@@ -37,12 +37,12 @@ function FieldShell({ id, label, icon, hint, error, children, trailing, layout =
             {label}
             {srSuffix && <span className="sr-only"> {srSuffix}</span>}
           </label>
-          {layout === 'stack' ? children : msg}
+          {layout === 'stack' ? children : hint && !error ? msg : null}
         </div>
         {layout === 'row' && <div className="field__control">{children}</div>}
         {trailing}
       </div>
-      {layout === 'stack' && msg && <div className="field__below">{msg}</div>}
+      {(layout === 'stack' ? msg : error ? msg : null) && <div className="field__below">{msg}</div>}
     </div>
   );
 }
