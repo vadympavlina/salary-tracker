@@ -218,7 +218,11 @@ test('toasts appear above an open dialog', async ({ page }) => {
 test('text is not selectable (native-app feel), form fields still are', async ({ page }) => {
   await page.goto('#/calculate?new=1');
   await appReady(page);
-  const sel = (selector: string) => page.locator(selector).first().evaluate((el) => getComputedStyle(el).userSelect || getComputedStyle(el).webkitUserSelect);
+  const sel = (selector: string) => page.locator(selector).first().evaluate((el) => {
+      const cs = getComputedStyle(el);
+      // WebKit keeps the unprefixed property at 'auto' and reports the real value on the prefixed one.
+      return cs.webkitUserSelect && cs.webkitUserSelect !== 'auto' ? cs.webkitUserSelect : cs.userSelect;
+    });
   expect(await sel('main h1')).toBe('none');
   expect(await sel('.group-list__header')).toBe('none');
   expect(await sel('input.field__input')).toBe('text');
